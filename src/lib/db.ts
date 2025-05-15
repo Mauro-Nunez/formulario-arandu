@@ -3,13 +3,14 @@ import { logger, LogLevel } from './logger';
 
 // Configuración de la conexión a la base de datos
 const dbConfig = {
-  host: 'localhost',
-  port: 3306,
-  user: 'formulario_user',
-  password: 'formulario_password',
-  database: 'formularios_db',
+  host: process.env.MYSQL_HOST!,
+  port: parseInt(process.env.MYSQL_PORT!),
+  user: process.env.MYSQL_USER!,
+  password: process.env.MYSQL_PASSWORD!,
+  database: process.env.MYSQL_DATABASE!,
   waitForConnections: true,
   connectionLimit: 10,
+  ssl: { rejectUnauthorized: false },
   queueLimit: 0
 };
 
