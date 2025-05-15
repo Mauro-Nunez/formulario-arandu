@@ -1,5 +1,8 @@
 <script lang="ts">
     import { onMount } from 'svelte';
+    import { goto } from '$app/navigation';
+    import { logger, LogLevel } from '$lib/logger';
+    import { userStore } from '$lib/stores';
     
     let disciplinaSeleccionada = '';
     let aceptoBases = false;
@@ -77,9 +80,170 @@
         { id: 'artesAudiovisuales', nombre: 'Artes Audiovisuales' }
     ];
 
-    function handleSubmit() {
-        // Aquí irá la lógica para enviar el formulario
-        console.log('Formulario enviado:', formData);
+    let enviando = false;
+    let formularioEnviado = false;
+    let mensajeError = '';
+
+    // Obtener el ID de disciplina a partir del texto
+    function getDisciplinaId(disciplinaNombre: string): number {
+        const disciplinasMap: Record<string, number> = {
+            'danza': 1,
+            'teatro': 2,
+            'musica': 3,
+            'letras': 4,
+            'fotografia': 5,
+            'artesVisuales': 6,
+            'artesAudiovisuales': 7
+        };
+        
+        return disciplinasMap[disciplinaNombre] || 0;
+    }
+
+    // Log de operación realizada
+    function logOperacion(mensaje: string, nivel: LogLevel = LogLevel.INFO, detalles?: any) {
+        logger.log(nivel, mensaje, detalles);
+    }
+
+    // Función para manejar el envío del formulario
+    async function handleSubmit() {
+        try {
+            enviando = true;
+            mensajeError = '';
+            
+            // Realizar validaciones adicionales
+            if (!disciplinaSeleccionada) {
+                throw new Error('Debe seleccionar una disciplina artística');
+            }
+            
+            if (!formData.nombre || !formData.email) {
+                throw new Error('Faltan campos obligatorios');
+            }
+            
+            // Registrar inicio de operación
+            logOperacion('Iniciando envío de formulario artístico', LogLevel.INFO, { 
+                disciplina: disciplinaSeleccionada,
+                nombre: formData.nombre
+            });
+            
+            // Crear un objeto FormData para enviar tanto datos como archivos
+            const formDataToSend = new FormData();
+            
+            // Agregar datos principales
+            formDataToSend.append('nombre', formData.nombre);
+            formDataToSend.append('disciplina', disciplinas.find(d => d.id === disciplinaSeleccionada)?.nombre || 'No especificada');
+            formDataToSend.append('disciplina_id', getDisciplinaId(disciplinaSeleccionada).toString());
+            formDataToSend.append('email', formData.email);
+            formDataToSend.append('telefono', formData.telefono);
+            formDataToSend.append('descripcion', formData.descripcion || '');
+            formDataToSend.append('tipoContenido', formData.tipoContenido);
+            formDataToSend.append('linkContenido', formData.linkContenido || '');
+            formDataToSend.append('usuario_id', ($userStore?.id || 1).toString());
+            
+            // Agregar el archivo si existe
+            if (formData.tipoContenido === 'archivo' && formData.archivoContenido) {
+                formDataToSend.append('archivoContenido', formData.archivoContenido);
+                
+                logOperacion('Archivo preparado para enviar', LogLevel.INFO, {
+                    nombre: formData.archivoContenido.name,
+                    tipo: formData.archivoContenido.type,
+                    tamaño: `${(formData.archivoContenido.size / 1024).toFixed(2)} KB`
+                });
+            }
+            
+            // Agregar campos específicos según disciplina en formato JSON
+            if (disciplinaSeleccionada === 'danza') {
+                formDataToSend.append('fichaArtistica', formData.fichaArtistica || '');
+                formDataToSend.append('historiaSolista', formData.historiaSolista || '');
+                formDataToSend.append('integrantesEnEscena', JSON.stringify(formData.integrantesEnEscena || []));
+                formDataToSend.append('integrantesFueraEscena', JSON.stringify(formData.integrantesFueraEscena || []));
+            }
+            
+            if (disciplinaSeleccionada === 'teatro') {
+                formDataToSend.append('autor', formData.autor || '');
+                formDataToSend.append('duracion', formData.duracion || '');
+                formDataToSend.append('genero', formData.genero || '');
+                formDataToSend.append('destinatarios', formData.destinatarios || '');
+                formDataToSend.append('sinopsis', formData.sinopsis || '');
+                formDataToSend.append('fechaEstreno', formData.fechaEstreno || '');
+                formDataToSend.append('numeroFunciones', formData.numeroFunciones || '');
+                formDataToSend.append('nombreGrupo', formData.nombreGrupo || '');
+                formDataToSend.append('elenco', JSON.stringify(formData.elenco || []));
+            }
+            
+            if (disciplinaSeleccionada === 'musica') {
+                formDataToSend.append('historia', formData.historia || '');
+                formDataToSend.append('descripcionMaterial', formData.descripcionMaterial || '');
+                formDataToSend.append('integrantes', JSON.stringify(formData.integrantes || []));
+                formDataToSend.append('colaboradores', JSON.stringify(formData.colaboradores || []));
+            }
+            
+            if (disciplinaSeleccionada === 'letras') {
+                formDataToSend.append('nombreAutor', formData.nombreAutor || '');
+                formDataToSend.append('apellidoAutor', formData.apellidoAutor || '');
+                formDataToSend.append('dniAutor', formData.dniAutor || '');
+                formDataToSend.append('sinopsis', formData.sinopsis || '');
+            }
+            
+            if (['fotografia', 'artesVisuales'].includes(disciplinaSeleccionada)) {
+                formDataToSend.append('nombreAutor', formData.nombreAutor || '');
+                formDataToSend.append('apellidoAutor', formData.apellidoAutor || '');
+                formDataToSend.append('dniAutor', formData.dniAutor || '');
+                formDataToSend.append('tecnica', formData.tecnica || '');
+                formDataToSend.append('materialEntregado', formData.materialEntregado || '');
+            }
+            
+            if (disciplinaSeleccionada === 'artesAudiovisuales') {
+                formDataToSend.append('nombreReferente', formData.nombreReferente || '');
+                formDataToSend.append('apellidoReferente', formData.apellidoReferente || '');
+                formDataToSend.append('dniReferente', formData.dniReferente || '');
+                formDataToSend.append('equipoTecnico', JSON.stringify(formData.equipoTecnico || []));
+                formDataToSend.append('sinopsis', formData.sinopsis || '');
+                formDataToSend.append('duracion', formData.duracion || '');
+                formDataToSend.append('genero', formData.genero || '');
+                formDataToSend.append('destinatarios', formData.destinatarios || '');
+                formDataToSend.append('descripcionProyecto', formData.descripcionProyecto || '');
+            }
+            
+            // Enviar el formulario con FormData (sin especificar Content-Type para que el navegador lo establezca correctamente)
+            const response = await fetch('/api/inscripciones', {
+                method: 'POST',
+                body: formDataToSend
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Error al guardar la inscripción');
+            }
+            
+            // Registrar resultado exitoso
+            logOperacion('Formulario enviado con éxito', LogLevel.INFO, {
+                nombre: formData.nombre,
+                disciplina: disciplinas.find(d => d.id === disciplinaSeleccionada)?.nombre
+            });
+            
+            // Marcamos como enviado
+            formularioEnviado = true;
+            
+            // Después de 3 segundos, redirigimos a la página principal
+            setTimeout(() => {
+                goto('/');
+            }, 3000);
+        } catch (error) {
+            // Capturamos el error y lo registramos
+            const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+            mensajeError = `Ha ocurrido un error al enviar el formulario: ${errorMessage}. Por favor, intente nuevamente.`;
+            
+            // Registrar el error
+            logOperacion(`Error al enviar formulario: ${errorMessage}`, LogLevel.ERROR, {
+                disciplina: disciplinaSeleccionada,
+                nombre: formData.nombre,
+                error: error
+            });
+            
+            console.error('Error al enviar formulario:', error);
+        } finally {
+            enviando = false;
+        }
     }
 
     function handleFileChange(event: Event) {
@@ -106,637 +270,664 @@
     <h1>Premios Arandú - Formulario de Inscripción Artística</h1>
     <p class="subtitulo">Convocatoria Bienal de Artes 2024</p>
     
-    <div class="bases-condiciones">
-        <h2>BASES Y CONDICIONES DE PARTICIPACIÓN PREMIOS ARANDÚ</h2>
-        
-        <div class="info-importante">
-            <h3>Período de Evaluación</h3>
-            <p>Se evaluará la producción artística bienal comprendida desde la conformación del jurado hasta 40 días antes de la premiación (según lo establecido en Art. 13 del CAPÍTULO II REGLAMENTO DE LOS PREMIOS establecido en el ANEXO ÚNICO de la ORDENANZA III Nº 121).</p>
-            <p><strong>Fecha de premiación:</strong> Jueves 20 de Noviembre</p>
-            <p><strong>Apertura de sobres:</strong> Jueves 09 de Octubre del 2024 (Sesión Ordinaria del HCD)</p>
+    {#if mensajeError}
+        <div class="mensaje-error">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-red-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p>{mensajeError}</p>
         </div>
-
-        <div class="requisitos-generales">
-            <h3>Requisitos Generales</h3>
-            <ul>
-                <li>Ser mayor de edad</li>
-                <li>Tener residencia en la ciudad de Posadas con un mínimo de dos años en la misma</li>
-                <li>La residencia se demostrará con la presentación del documento nacional de identidad a la comisión organizadora</li>
-            </ul>
+    {/if}
+    
+    {#if formularioEnviado}
+        <div class="mensaje-exito">
+            <svg class="w-16 h-16 mx-auto text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            <h2 class="text-2xl font-bold mt-4">¡Inscripción Enviada con Éxito!</h2>
+            <p class="mt-2">Gracias por participar en la Convocatoria Bienal de Artes 2024.</p>
+            <p class="mt-2">Será redirigido en unos segundos...</p>
         </div>
-
-        <div class="restricciones">
-            <h3>Restricciones</h3>
-            <p>No podrán participar:</p>
-            <ul>
-                <li>Funcionarios/as</li>
-                <li>Elenco artísticos estatales</li>
-                <li>Obras/producciones que hayan sido premiadas en ediciones anteriores</li>
-                <li>Personas con relación de parentesco hasta el segundo (2º) grado consanguíneo y/o de afinidad con algún miembro del jurado</li>
-            </ul>
-        </div>
-
-        <div class="aceptacion-bases">
-            <label class="checkbox-container">
-                <input type="checkbox" bind:checked={aceptoBases}>
-                <span>He leído y acepto las bases y condiciones de participación</span>
-            </label>
-        </div>
-    </div>
-
-    {#if aceptoBases}
-        <form on:submit|preventDefault={handleSubmit}>
-            <div class="form-section">
-                <label for="disciplina">Disciplina Artística:</label>
-                <select 
-                    id="disciplina" 
-                    bind:value={disciplinaSeleccionada} 
-                    required
-                >
-                    <option value="">Seleccione una disciplina</option>
-                    {#each disciplinas as disciplina}
-                        <option value={disciplina.id}>{disciplina.nombre}</option>
-                    {/each}
-                </select>
+    {:else}
+        <div class="bases-condiciones">
+            <h2>BASES Y CONDICIONES DE PARTICIPACIÓN PREMIOS ARANDÚ</h2>
+            
+            <div class="info-importante">
+                <h3>Período de Evaluación</h3>
+                <p>Se evaluará la producción artística bienal comprendida desde la conformación del jurado hasta 40 días antes de la premiación (según lo establecido en Art. 13 del CAPÍTULO II REGLAMENTO DE LOS PREMIOS establecido en el ANEXO ÚNICO de la ORDENANZA III Nº 121).</p>
+                <p><strong>Fecha de premiación:</strong> Jueves 20 de Noviembre</p>
+                <p><strong>Apertura de sobres:</strong> Jueves 09 de Octubre del 2024 (Sesión Ordinaria del HCD)</p>
             </div>
 
-            <div class="form-section">
-                <label for="nombre">Nombre de la obra/artista:</label>
-                <input 
-                    type="text" 
-                    id="nombre" 
-                    bind:value={formData.nombre} 
-                    required
-                />
+            <div class="requisitos-generales">
+                <h3>Requisitos Generales</h3>
+                <ul>
+                    <li>Ser mayor de edad</li>
+                    <li>Tener residencia en la ciudad de Posadas con un mínimo de dos años en la misma</li>
+                    <li>La residencia se demostrará con la presentación del documento nacional de identidad a la comisión organizadora</li>
+                </ul>
             </div>
 
-            <div class="form-section contacto-section">
-                <h3>Información de Contacto</h3>
-                <div class="contacto-grid">
-                    <div class="form-group">
-                        <label for="email">Correo Electrónico:</label>
-                        <input 
-                            type="email" 
-                            id="email" 
-                            bind:value={formData.email} 
-                            placeholder="ejemplo@correo.com"
-                            required
-                        />
-                    </div>
-                    <div class="form-group">
-                        <label for="telefono">Teléfono:</label>
-                        <input 
-                            type="tel" 
-                            id="telefono" 
-                            bind:value={formData.telefono} 
-                            placeholder="+54 376 XXXXXXX"
-                            required
-                        />
+            <div class="restricciones">
+                <h3>Restricciones</h3>
+                <p>No podrán participar:</p>
+                <ul>
+                    <li>Funcionarios/as</li>
+                    <li>Elenco artísticos estatales</li>
+                    <li>Obras/producciones que hayan sido premiadas en ediciones anteriores</li>
+                    <li>Personas con relación de parentesco hasta el segundo (2º) grado consanguíneo y/o de afinidad con algún miembro del jurado</li>
+                </ul>
+            </div>
+
+            <div class="aceptacion-bases">
+                <label class="checkbox-container">
+                    <input type="checkbox" bind:checked={aceptoBases}>
+                    <span>He leído y acepto las bases y condiciones de participación</span>
+                </label>
+            </div>
+        </div>
+
+        {#if aceptoBases}
+            <form on:submit|preventDefault={handleSubmit}>
+                <div class="form-section">
+                    <label for="disciplina">Disciplina Artística:</label>
+                    <select 
+                        id="disciplina" 
+                        bind:value={disciplinaSeleccionada} 
+                        required
+                    >
+                        <option value="">Seleccione una disciplina</option>
+                        {#each disciplinas as disciplina}
+                            <option value={disciplina.id}>{disciplina.nombre}</option>
+                        {/each}
+                    </select>
+                </div>
+
+                <div class="form-section">
+                    <label for="nombre">Nombre de la obra/artista:</label>
+                    <input 
+                        type="text" 
+                        id="nombre" 
+                        bind:value={formData.nombre} 
+                        required
+                    />
+                </div>
+
+                <div class="form-section contacto-section">
+                    <h3>Información de Contacto</h3>
+                    <div class="contacto-grid">
+                        <div class="form-group">
+                            <label for="email">Correo Electrónico:</label>
+                            <input 
+                                type="email" 
+                                id="email" 
+                                bind:value={formData.email} 
+                                placeholder="ejemplo@correo.com"
+                                required
+                            />
+                        </div>
+                        <div class="form-group">
+                            <label for="telefono">Teléfono:</label>
+                            <input 
+                                type="tel" 
+                                id="telefono" 
+                                bind:value={formData.telefono} 
+                                placeholder="+54 376 XXXXXXX"
+                                required
+                            />
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="form-section">
-                <h4>Contenido de la presentación</h4>
-                <div class="info-box">
-                    {#if disciplinaSeleccionada === 'danza' || disciplinaSeleccionada === 'teatro' || disciplinaSeleccionada === 'musica'}
-                        <p>La obra puede presentarse de forma presencial o en formato digital. En caso de presentación digital, el video debe estar filmado a una sola cámara y en una sola toma, sin edición.</p>
-                    {:else if disciplinaSeleccionada === 'letras'}
-                        <p>La obra puede presentarse en formato digital (PDF) o presencial (tres copias impresas).</p>
-                    {:else if disciplinaSeleccionada === 'fotografia'}
-                        <p>La obra puede presentarse en formato digital (JPG o PDF) o presencial (tres copias impresas, tamaño mínimo 15x21 cm).</p>
-                    {:else if disciplinaSeleccionada === 'artesVisuales'}
-                        {#if formData.tipoObra === 'bidimensional'}
-                            <p>Presentación presencial. Tamaño mínimo 15x21 cm, máximo 200 cm (incluyendo marco y/o soporte).</p>
-                        {:else if formData.tipoObra === 'tridimensional'}
-                            <p>Presentación presencial. Tamaño mínimo 15x21x5 cm, máximo 200 cm.</p>
-                        {:else}
-                            <p>Extensión máxima de 90 páginas, todas numeradas. Presentación en formato digital (PDF) o presencial (tres ejemplares impresos).</p>
+                <div class="form-section">
+                    <h4>Contenido de la presentación</h4>
+                    <div class="info-box">
+                        {#if disciplinaSeleccionada === 'danza' || disciplinaSeleccionada === 'teatro' || disciplinaSeleccionada === 'musica'}
+                            <p>La obra puede presentarse de forma presencial o en formato digital. En caso de presentación digital, el video debe estar filmado a una sola cámara y en una sola toma, sin edición.</p>
+                        {:else if disciplinaSeleccionada === 'letras'}
+                            <p>La obra puede presentarse en formato digital (PDF) o presencial (tres copias impresas).</p>
+                        {:else if disciplinaSeleccionada === 'fotografia'}
+                            <p>La obra puede presentarse en formato digital (JPG o PDF) o presencial (tres copias impresas, tamaño mínimo 15x21 cm).</p>
+                        {:else if disciplinaSeleccionada === 'artesVisuales'}
+                            {#if formData.tipoObra === 'bidimensional'}
+                                <p>Presentación presencial. Tamaño mínimo 15x21 cm, máximo 200 cm (incluyendo marco y/o soporte).</p>
+                            {:else if formData.tipoObra === 'tridimensional'}
+                                <p>Presentación presencial. Tamaño mínimo 15x21x5 cm, máximo 200 cm.</p>
+                            {:else}
+                                <p>Extensión máxima de 90 páginas, todas numeradas. Presentación en formato digital (PDF) o presencial (tres ejemplares impresos).</p>
+                            {/if}
+                        {:else if disciplinaSeleccionada === 'artesAudiovisuales'}
+                            <p>Presentación en formato digital (video o link de visualización web).</p>
                         {/if}
-                    {:else if disciplinaSeleccionada === 'artesAudiovisuales'}
-                        <p>Presentación en formato digital (video o link de visualización web).</p>
+                    </div>
+
+                    <div class="contenido-options">
+                        <div class="radio-option">
+                            <input 
+                                type="radio" 
+                                id="tipoArchivo" 
+                                name="tipoContenido" 
+                                value="archivo" 
+                                bind:group={formData.tipoContenido}
+                                on:change={resetContenido}
+                            />
+                            <label for="tipoArchivo">Subir archivo</label>
+                        </div>
+
+                        <div class="radio-option">
+                            <input 
+                                type="radio" 
+                                id="tipoLink" 
+                                name="tipoContenido" 
+                                value="link" 
+                                bind:group={formData.tipoContenido}
+                                on:change={resetContenido}
+                            />
+                            <label for="tipoLink">Enlace</label>
+                        </div>
+                    </div>
+
+                    {#if formData.tipoContenido === 'archivo'}
+                        <div class="archivo-upload">
+                            <label for="archivoContenido">Archivo de presentación:</label>
+                            <input 
+                                type="file" 
+                                id="archivoContenido" 
+                                accept=".mp4,.mov,.avi,.pdf,.jpg,.jpeg,.png" 
+                                on:change={handleContenidoChange}
+                                required
+                            />
+                            <p class="formato-descripcion">
+                                Formatos aceptados: MP4, MOV, AVI, PDF, JPG, JPEG, PNG
+                            </p>
+                        </div>
+                    {:else}
+                        <div class="link-input">
+                            <label for="linkContenido">Enlace a la presentación:</label>
+                            <input 
+                                type="url" 
+                                id="linkContenido" 
+                                bind:value={formData.linkContenido} 
+                                placeholder="https://..."
+                                required
+                            />
+                        </div>
                     {/if}
                 </div>
 
-                <div class="contenido-options">
-                    <div class="radio-option">
-                        <input 
-                            type="radio" 
-                            id="tipoArchivo" 
-                            name="tipoContenido" 
-                            value="archivo" 
-                            bind:group={formData.tipoContenido}
-                            on:change={resetContenido}
-                        />
-                        <label for="tipoArchivo">Subir archivo</label>
-                    </div>
+                {#if disciplinaSeleccionada === 'danza'}
+                    <div class="form-section">
+                        <label for="descripcion">Descripción de la coreografía/obra:</label>
+                        <textarea 
+                            id="descripcion" 
+                            bind:value={formData.descripcion} 
+                            required
+                        ></textarea>
 
-                    <div class="radio-option">
-                        <input 
-                            type="radio" 
-                            id="tipoLink" 
-                            name="tipoContenido" 
-                            value="link" 
-                            bind:group={formData.tipoContenido}
-                            on:change={resetContenido}
-                        />
-                        <label for="tipoLink">Enlace</label>
-                    </div>
-                </div>
-
-                {#if formData.tipoContenido === 'archivo'}
-                    <div class="archivo-upload">
-                        <label for="archivoContenido">Archivo de presentación:</label>
+                        <label for="declaracionJurada">Declaración Jurada:</label>
                         <input 
                             type="file" 
-                            id="archivoContenido" 
-                            accept=".mp4,.mov,.avi,.pdf,.jpg,.jpeg,.png" 
-                            on:change={handleContenidoChange}
+                            id="declaracionJurada" 
+                            accept=".pdf,.doc,.docx" 
+                            on:change={handleFileChange}
                             required
                         />
-                        <p class="formato-descripcion">
-                            Formatos aceptados: MP4, MOV, AVI, PDF, JPG, JPEG, PNG
-                        </p>
-                    </div>
-                {:else}
-                    <div class="link-input">
-                        <label for="linkContenido">Enlace a la presentación:</label>
-                        <input 
-                            type="url" 
-                            id="linkContenido" 
-                            bind:value={formData.linkContenido} 
-                            placeholder="https://..."
+
+                        <label for="fichaArtistica">Ficha artística y técnica:</label>
+                        <textarea 
+                            id="fichaArtistica" 
+                            bind:value={formData.fichaArtistica} 
                             required
-                        />
+                        ></textarea>
+
+                        <label for="historiaSolista">Breve historia del/a solista o grupo:</label>
+                        <textarea 
+                            id="historiaSolista" 
+                            bind:value={formData.historiaSolista} 
+                            required
+                        ></textarea>
+
+                        <h4>Integrantes en escena</h4>
+                        {#each formData.integrantesEnEscena as integrante, i}
+                            <div class="integrante-form">
+                                <input type="text" placeholder="Nombre" bind:value={integrante.nombre} required />
+                                <input type="text" placeholder="Apellido" bind:value={integrante.apellido} required />
+                                <input type="text" placeholder="DNI" bind:value={integrante.dni} required />
+                                <button type="button" on:click={() => formData.integrantesEnEscena = formData.integrantesEnEscena.filter((_, index) => index !== i)}>Eliminar</button>
+                            </div>
+                        {/each}
+                        <button type="button" on:click={() => formData.integrantesEnEscena = [...formData.integrantesEnEscena, { nombre: '', apellido: '', dni: '' }]}>
+                            Agregar integrante en escena
+                        </button>
+
+                        <h4>Integrantes fuera de escena</h4>
+                        {#each formData.integrantesFueraEscena as integrante, i}
+                            <div class="integrante-form">
+                                <input type="text" placeholder="Rol" bind:value={integrante.rol} required />
+                                <input type="text" placeholder="Nombre" bind:value={integrante.nombre} required />
+                                <input type="text" placeholder="Apellido" bind:value={integrante.apellido} required />
+                                <input type="text" placeholder="DNI" bind:value={integrante.dni} required />
+                                <button type="button" on:click={() => formData.integrantesFueraEscena = formData.integrantesFueraEscena.filter((_, index) => index !== i)}>Eliminar</button>
+                            </div>
+                        {/each}
+                        <button type="button" on:click={() => formData.integrantesFueraEscena = [...formData.integrantesFueraEscena, { rol: '', nombre: '', apellido: '', dni: '' }]}>
+                            Agregar integrante fuera de escena
+                        </button>
                     </div>
                 {/if}
-            </div>
 
-            {#if disciplinaSeleccionada === 'danza'}
-                <div class="form-section">
-                    <label for="descripcion">Descripción de la coreografía/obra:</label>
-                    <textarea 
-                        id="descripcion" 
-                        bind:value={formData.descripcion} 
-                        required
-                    ></textarea>
+                {#if disciplinaSeleccionada === 'teatro'}
+                    <div class="form-section">
+                        <label for="autor">Autor:</label>
+                        <input type="text" id="autor" bind:value={formData.autor} required />
 
-                    <label for="declaracionJurada">Declaración Jurada:</label>
-                    <input 
-                        type="file" 
-                        id="declaracionJurada" 
-                        accept=".pdf,.doc,.docx" 
-                        on:change={handleFileChange}
-                        required
-                    />
+                        <label for="autorizacion">Autorización del autor o Argentores:</label>
+                        <input type="file" id="autorizacion" accept=".pdf,.doc,.docx" on:change={handleFileChange} required />
 
-                    <label for="fichaArtistica">Ficha artística y técnica:</label>
-                    <textarea 
-                        id="fichaArtistica" 
-                        bind:value={formData.fichaArtistica} 
-                        required
-                    ></textarea>
+                        <label for="duracion">Duración del espectáculo:</label>
+                        <input type="text" id="duracion" bind:value={formData.duracion} required />
 
-                    <label for="historiaSolista">Breve historia del/a solista o grupo:</label>
-                    <textarea 
-                        id="historiaSolista" 
-                        bind:value={formData.historiaSolista} 
-                        required
-                    ></textarea>
+                        <label for="genero">Género:</label>
+                        <input type="text" id="genero" bind:value={formData.genero} required />
 
-                    <h4>Integrantes en escena</h4>
-                    {#each formData.integrantesEnEscena as integrante, i}
-                        <div class="integrante-form">
-                            <input type="text" placeholder="Nombre" bind:value={integrante.nombre} required />
-                            <input type="text" placeholder="Apellido" bind:value={integrante.apellido} required />
-                            <input type="text" placeholder="DNI" bind:value={integrante.dni} required />
-                            <button type="button" on:click={() => formData.integrantesEnEscena = formData.integrantesEnEscena.filter((_, index) => index !== i)}>Eliminar</button>
-                        </div>
-                    {/each}
-                    <button type="button" on:click={() => formData.integrantesEnEscena = [...formData.integrantesEnEscena, { nombre: '', apellido: '', dni: '' }]}>
-                        Agregar integrante en escena
-                    </button>
+                        <label for="destinatarios">Destinatarios:</label>
+                        <input type="text" id="destinatarios" bind:value={formData.destinatarios} required />
 
-                    <h4>Integrantes fuera de escena</h4>
-                    {#each formData.integrantesFueraEscena as integrante, i}
-                        <div class="integrante-form">
-                            <input type="text" placeholder="Rol" bind:value={integrante.rol} required />
-                            <input type="text" placeholder="Nombre" bind:value={integrante.nombre} required />
-                            <input type="text" placeholder="Apellido" bind:value={integrante.apellido} required />
-                            <input type="text" placeholder="DNI" bind:value={integrante.dni} required />
-                            <button type="button" on:click={() => formData.integrantesFueraEscena = formData.integrantesFueraEscena.filter((_, index) => index !== i)}>Eliminar</button>
-                        </div>
-                    {/each}
-                    <button type="button" on:click={() => formData.integrantesFueraEscena = [...formData.integrantesFueraEscena, { rol: '', nombre: '', apellido: '', dni: '' }]}>
-                        Agregar integrante fuera de escena
-                    </button>
-                </div>
-            {/if}
+                        <label for="sinopsis">Síntesis argumental (sinopsis):</label>
+                        <textarea id="sinopsis" bind:value={formData.sinopsis} required></textarea>
 
-            {#if disciplinaSeleccionada === 'teatro'}
-                <div class="form-section">
-                    <label for="autor">Autor:</label>
-                    <input type="text" id="autor" bind:value={formData.autor} required />
+                        <h4>Funciones</h4>
+                        <label for="fechaEstreno">Fecha de estreno:</label>
+                        <input type="date" id="fechaEstreno" bind:value={formData.fechaEstreno} required />
 
-                    <label for="autorizacion">Autorización del autor o Argentores:</label>
-                    <input type="file" id="autorizacion" accept=".pdf,.doc,.docx" on:change={handleFileChange} required />
+                        <label for="numeroFunciones">Número de funciones realizadas:</label>
+                        <input type="number" id="numeroFunciones" bind:value={formData.numeroFunciones} min="0" required />
 
-                    <label for="duracion">Duración del espectáculo:</label>
-                    <input type="text" id="duracion" bind:value={formData.duracion} required />
+                        <h4>Grupo Teatral</h4>
+                        <label for="nombreGrupo">Nombre del grupo:</label>
+                        <input type="text" id="nombreGrupo" bind:value={formData.nombreGrupo} required />
 
-                    <label for="genero">Género:</label>
-                    <input type="text" id="genero" bind:value={formData.genero} required />
-
-                    <label for="destinatarios">Destinatarios:</label>
-                    <input type="text" id="destinatarios" bind:value={formData.destinatarios} required />
-
-                    <label for="sinopsis">Síntesis argumental (sinopsis):</label>
-                    <textarea id="sinopsis" bind:value={formData.sinopsis} required></textarea>
-
-                    <h4>Funciones</h4>
-                    <label for="fechaEstreno">Fecha de estreno:</label>
-                    <input type="date" id="fechaEstreno" bind:value={formData.fechaEstreno} required />
-
-                    <label for="numeroFunciones">Número de funciones realizadas:</label>
-                    <input type="number" id="numeroFunciones" bind:value={formData.numeroFunciones} min="0" required />
-
-                    <h4>Grupo Teatral</h4>
-                    <label for="nombreGrupo">Nombre del grupo:</label>
-                    <input type="text" id="nombreGrupo" bind:value={formData.nombreGrupo} required />
-
-                    <div class="checkbox-container">
-                        <input type="checkbox" id="esConcertado" bind:checked={formData.esConcertado} />
-                        <label for="esConcertado">Espectáculo concertado</label>
-                    </div>
-
-                    <h4>Contacto del responsable</h4>
-                    <div class="contacto-form">
-                        <input type="text" placeholder="Nombre" bind:value={formData.responsableNombre} required />
-                        <input type="text" placeholder="Apellido" bind:value={formData.responsableApellido} required />
-                        <input type="tel" placeholder="Teléfono" bind:value={formData.responsableTelefono} required />
-                        <input type="email" placeholder="E-mail" bind:value={formData.responsableEmail} required />
-                    </div>
-
-                    <h4>Elenco</h4>
-                    {#each formData.elenco as integrante, i}
-                        <div class="integrante-form">
-                            <input type="text" placeholder="Rol" bind:value={integrante.rol} required />
-                            <input type="text" placeholder="Nombre" bind:value={integrante.nombre} required />
-                            <input type="text" placeholder="Apellido" bind:value={integrante.apellido} required />
-                            <input type="text" placeholder="DNI" bind:value={integrante.dni} required />
-                            <button type="button" on:click={() => formData.elenco = formData.elenco.filter((_, index) => index !== i)}>Eliminar</button>
-                        </div>
-                    {/each}
-                    <button type="button" on:click={() => formData.elenco = [...formData.elenco, { rol: '', nombre: '', apellido: '', dni: '' }]}>
-                        Agregar integrante al elenco
-                    </button>
-                </div>
-            {/if}
-
-            {#if disciplinaSeleccionada === 'musica'}
-                <div class="form-section">
-                    <label for="descripcionMusica">Descripción de la misma:</label>
-                    <textarea id="descripcionMusica" bind:value={formData.descripcion} required></textarea>
-
-                    <label for="declaracionJuradaMusica">Declaración jurada sobre derecho de autor:</label>
-                    <input type="file" id="declaracionJuradaMusica" accept=".pdf,.doc,.docx" on:change={handleFileChange} required />
-
-                    <label for="fichaArtistica">Ficha artística y técnica:</label>
-                    <input type="file" id="fichaArtistica" accept=".pdf,.doc,.docx" on:change={handleFileChange} required />
-
-                    <label for="historia">Breve historia del solista/duo/banda:</label>
-                    <textarea id="historia" bind:value={formData.historia} required></textarea>
-
-                    <label for="descripcionMaterial">Descripción del material entregado:</label>
-                    <textarea id="descripcionMaterial" bind:value={formData.descripcionMaterial} required></textarea>
-
-                    <h4>Integrantes</h4>
-                    {#each formData.integrantes as integrante, i}
-                        <div class="integrante-form">
-                            <input type="text" placeholder="Nombre" bind:value={integrante.nombre} required />
-                            <input type="text" placeholder="Apellido" bind:value={integrante.apellido} required />
-                            <input type="text" placeholder="DNI" bind:value={integrante.dni} required />
-                            <button type="button" on:click={() => formData.integrantes = formData.integrantes.filter((_, index) => index !== i)}>Eliminar</button>
-                        </div>
-                    {/each}
-                    <button type="button" on:click={() => formData.integrantes = [...formData.integrantes, { nombre: '', apellido: '', dni: '' }]}>
-                        Agregar integrante
-                    </button>
-
-                    <h4>Integrantes/Colaboradores</h4>
-                    {#each formData.colaboradores as colaborador, i}
-                        <div class="integrante-form">
-                            <input type="text" placeholder="Rol" bind:value={colaborador.rol} required />
-                            <input type="text" placeholder="Nombre" bind:value={colaborador.nombre} required />
-                            <input type="text" placeholder="Apellido" bind:value={colaborador.apellido} required />
-                            <input type="text" placeholder="DNI" bind:value={colaborador.dni} required />
-                            <button type="button" on:click={() => formData.colaboradores = formData.colaboradores.filter((_, index) => index !== i)}>Eliminar</button>
-                        </div>
-                    {/each}
-                    <button type="button" on:click={() => formData.colaboradores = [...formData.colaboradores, { rol: '', nombre: '', apellido: '', dni: '' }]}>
-                        Agregar colaborador
-                    </button>
-                </div>
-            {/if}
-
-            {#if disciplinaSeleccionada === 'letras'}
-                <div class="form-section">
-                    <label for="sinopsisLetras">Breve sinopsis:</label>
-                    <textarea id="sinopsisLetras" bind:value={formData.sinopsis} required></textarea>
-
-                    <label for="declaracionJuradaLetras">Declaración jurada sobre derechos de autor:</label>
-                    <input type="file" id="declaracionJuradaLetras" accept=".pdf,.doc,.docx" on:change={handleFileChange} required />
-
-                    <h4>Datos personales del autor</h4>
-                    <div class="datos-personales">
-                        <input type="text" placeholder="Nombre" bind:value={formData.nombreAutor} required />
-                        <input type="text" placeholder="Apellido" bind:value={formData.apellidoAutor} required />
-                        <input type="text" placeholder="DNI" bind:value={formData.dniAutor} required />
-                    </div>
-
-                    <h4>Formato de presentación</h4>
-                    <div class="formato-presentacion">
-                        <div class="radio-option">
-                            <input 
-                                type="radio" 
-                                id="formatoDigital" 
-                                name="formatoPresentacion" 
-                                value="digital" 
-                                bind:group={formData.formatoPresentacion}
-                            />
-                            <label for="formatoDigital">Formato Digital</label>
-                            <p class="formato-descripcion">
-                                Deberá ser enviado en formato PDF con el asunto "Obra – Arandú – Rubro Letras" 
-                                y adjuntar datos del autor/a y de la producción (breve reseña o descripción de la obra)
-                            </p>
+                        <div class="checkbox-container">
+                            <input type="checkbox" id="esConcertado" bind:checked={formData.esConcertado} />
+                            <label for="esConcertado">Espectáculo concertado</label>
                         </div>
 
-                        <div class="radio-option">
-                            <input 
-                                type="radio" 
-                                id="formatoImpreso" 
-                                name="formatoPresentacion" 
-                                value="impreso" 
-                                bind:group={formData.formatoPresentacion}
-                            />
-                            <label for="formatoImpreso">Formato Impreso</label>
-                            <p class="formato-descripcion">
-                                Se deberán entregar tres (3) copias del material editado
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            {/if}
-
-            {#if disciplinaSeleccionada === 'fotografia'}
-                <div class="form-section">
-                    <label for="descripcionFotografia">Descripción de la obra:</label>
-                    <textarea id="descripcionFotografia" bind:value={formData.descripcion} required></textarea>
-
-                    <label for="declaracionJuradaFotografia">Declaración jurada sobre derechos de autor:</label>
-                    <input type="file" id="declaracionJuradaFotografia" accept=".pdf,.doc,.docx" on:change={handleFileChange} required />
-
-                    <label for="tecnica">Técnica / Descripción del material entregado:</label>
-                    <textarea id="tecnica" bind:value={formData.tecnica} required></textarea>
-
-                    <h4>Datos personales del autor</h4>
-                    <div class="datos-personales">
-                        <input type="text" placeholder="Nombre" bind:value={formData.nombreAutor} required />
-                        <input type="text" placeholder="Apellido" bind:value={formData.apellidoAutor} required />
-                        <input type="text" placeholder="DNI" bind:value={formData.dniAutor} required />
-                    </div>
-
-                    <h4>Formato de presentación</h4>
-                    <div class="formato-presentacion">
-                        <div class="radio-option">
-                            <input 
-                                type="radio" 
-                                id="formatoDigitalFoto" 
-                                name="formatoPresentacionFoto" 
-                                value="digital" 
-                                bind:group={formData.formatoPresentacionFoto}
-                            />
-                            <label for="formatoDigitalFoto">Formato Digital</label>
-                            <p class="formato-descripcion">
-                                Deberá enviarse el material en formato JPG ó PDF con el asunto "Obra – Arandú – Rubro Fotografía" 
-                                y adjuntar datos del autor/a y de la producción (breve reseña o descripción de la obra)
-                            </p>
+                        <h4>Contacto del responsable</h4>
+                        <div class="contacto-form">
+                            <input type="text" placeholder="Nombre" bind:value={formData.responsableNombre} required />
+                            <input type="text" placeholder="Apellido" bind:value={formData.responsableApellido} required />
+                            <input type="tel" placeholder="Teléfono" bind:value={formData.responsableTelefono} required />
+                            <input type="email" placeholder="E-mail" bind:value={formData.responsableEmail} required />
                         </div>
 
-                        <div class="radio-option">
-                            <input 
-                                type="radio" 
-                                id="formatoImpresoFoto" 
-                                name="formatoPresentacionFoto" 
-                                value="impreso" 
-                                bind:group={formData.formatoPresentacionFoto}
-                            />
-                            <label for="formatoImpresoFoto">Formato Impreso</label>
-                            <p class="formato-descripcion">
-                                Se deberán entregar tres (3) copias con un tamaño mínimo de 15x21 cm
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            {/if}
-
-            {#if disciplinaSeleccionada === 'artesVisuales'}
-                <div class="form-section">
-                    <label for="descripcionArtesVisuales">Descripción de la obra:</label>
-                    <textarea id="descripcionArtesVisuales" bind:value={formData.descripcion} required></textarea>
-
-                    <label for="declaracionJuradaArtesVisuales">Declaración jurada sobre derecho de autor:</label>
-                    <input type="file" id="declaracionJuradaArtesVisuales" accept=".pdf,.doc,.docx" on:change={handleFileChange} required />
-
-                    <label for="tecnicaArtesVisuales">Técnica:</label>
-                    <input type="text" id="tecnicaArtesVisuales" bind:value={formData.tecnica} required />
-
-                    <h4>Datos personales</h4>
-                    <div class="datos-personales">
-                        <input type="text" placeholder="Nombre" bind:value={formData.nombreAutor} required />
-                        <input type="text" placeholder="Apellido" bind:value={formData.apellidoAutor} required />
-                        <input type="text" placeholder="DNI" bind:value={formData.dniAutor} required />
-                    </div>
-
-                    <h4>Tipo de obra</h4>
-                    <div class="tipo-obra">
-                        <div class="radio-option">
-                            <input 
-                                type="radio" 
-                                id="tipoBidimensional" 
-                                name="tipoObra" 
-                                value="bidimensional" 
-                                bind:group={formData.tipoObra}
-                            />
-                            <label for="tipoBidimensional">Obra Bidimensional (pintura, ilustración, grabado, dibujo)</label>
-                            <p class="formato-descripcion">
-                                Tamaño mínimo: 15x21 cm<br>
-                                Tamaño máximo: 200 cm (incluyendo marco y/o soporte)
-                            </p>
-                        </div>
-
-                        <div class="radio-option">
-                            <input 
-                                type="radio" 
-                                id="tipoTridimensional" 
-                                name="tipoObra" 
-                                value="tridimensional" 
-                                bind:group={formData.tipoObra}
-                            />
-                            <label for="tipoTridimensional">Obra Tridimensional (escultura, objetos, instalaciones)</label>
-                            <p class="formato-descripcion">
-                                Tamaño mínimo: 15x21x5 cm<br>
-                                Tamaño máximo: 200 cm
-                            </p>
-                        </div>
-
-                        <div class="radio-option">
-                            <input 
-                                type="radio" 
-                                id="tipoHistorieta" 
-                                name="tipoObra" 
-                                value="historieta" 
-                                bind:group={formData.tipoObra}
-                            />
-                            <label for="tipoHistorieta">Historieta/Comic</label>
-                            <p class="formato-descripcion">
-                                Extensión máxima: 90 páginas<br>
-                                Todas las páginas deben estar numeradas
-                            </p>
-                        </div>
-                    </div>
-
-                    {#if formData.tipoObra !== 'historieta'}
-                        <h4>Medidas de la obra</h4>
-                        <div class="medidas-form">
-                            <div class="medida-input">
-                                <label for="ancho">Ancho (cm):</label>
-                                <input type="number" id="ancho" bind:value={formData.medidas.ancho} required min="15" max="200" />
+                        <h4>Elenco</h4>
+                        {#each formData.elenco as integrante, i}
+                            <div class="integrante-form">
+                                <input type="text" placeholder="Rol" bind:value={integrante.rol} required />
+                                <input type="text" placeholder="Nombre" bind:value={integrante.nombre} required />
+                                <input type="text" placeholder="Apellido" bind:value={integrante.apellido} required />
+                                <input type="text" placeholder="DNI" bind:value={integrante.dni} required />
+                                <button type="button" on:click={() => formData.elenco = formData.elenco.filter((_, index) => index !== i)}>Eliminar</button>
                             </div>
-                            <div class="medida-input">
-                                <label for="alto">Alto (cm):</label>
-                                <input type="number" id="alto" bind:value={formData.medidas.alto} required min="21" max="200" />
+                        {/each}
+                        <button type="button" on:click={() => formData.elenco = [...formData.elenco, { rol: '', nombre: '', apellido: '', dni: '' }]}>
+                            Agregar integrante al elenco
+                        </button>
+                    </div>
+                {/if}
+
+                {#if disciplinaSeleccionada === 'musica'}
+                    <div class="form-section">
+                        <label for="descripcionMusica">Descripción de la misma:</label>
+                        <textarea id="descripcionMusica" bind:value={formData.descripcion} required></textarea>
+
+                        <label for="declaracionJuradaMusica">Declaración jurada sobre derecho de autor:</label>
+                        <input type="file" id="declaracionJuradaMusica" accept=".pdf,.doc,.docx" on:change={handleFileChange} required />
+
+                        <label for="fichaArtistica">Ficha artística y técnica:</label>
+                        <input type="file" id="fichaArtistica" accept=".pdf,.doc,.docx" on:change={handleFileChange} required />
+
+                        <label for="historia">Breve historia del solista/duo/banda:</label>
+                        <textarea id="historia" bind:value={formData.historia} required></textarea>
+
+                        <label for="descripcionMaterial">Descripción del material entregado:</label>
+                        <textarea id="descripcionMaterial" bind:value={formData.descripcionMaterial} required></textarea>
+
+                        <h4>Integrantes</h4>
+                        {#each formData.integrantes as integrante, i}
+                            <div class="integrante-form">
+                                <input type="text" placeholder="Nombre" bind:value={integrante.nombre} required />
+                                <input type="text" placeholder="Apellido" bind:value={integrante.apellido} required />
+                                <input type="text" placeholder="DNI" bind:value={integrante.dni} required />
+                                <button type="button" on:click={() => formData.integrantes = formData.integrantes.filter((_, index) => index !== i)}>Eliminar</button>
                             </div>
-                            {#if formData.tipoObra === 'tridimensional'}
-                                <div class="medida-input">
-                                    <label for="profundidad">Profundidad (cm):</label>
-                                    <input type="number" id="profundidad" bind:value={formData.medidas.profundidad} required min="5" max="200" />
-                                </div>
-                            {/if}
+                        {/each}
+                        <button type="button" on:click={() => formData.integrantes = [...formData.integrantes, { nombre: '', apellido: '', dni: '' }]}>
+                            Agregar integrante
+                        </button>
+
+                        <h4>Integrantes/Colaboradores</h4>
+                        {#each formData.colaboradores as colaborador, i}
+                            <div class="integrante-form">
+                                <input type="text" placeholder="Rol" bind:value={colaborador.rol} required />
+                                <input type="text" placeholder="Nombre" bind:value={colaborador.nombre} required />
+                                <input type="text" placeholder="Apellido" bind:value={colaborador.apellido} required />
+                                <input type="text" placeholder="DNI" bind:value={colaborador.dni} required />
+                                <button type="button" on:click={() => formData.colaboradores = formData.colaboradores.filter((_, index) => index !== i)}>Eliminar</button>
+                            </div>
+                        {/each}
+                        <button type="button" on:click={() => formData.colaboradores = [...formData.colaboradores, { rol: '', nombre: '', apellido: '', dni: '' }]}>
+                            Agregar colaborador
+                        </button>
+                    </div>
+                {/if}
+
+                {#if disciplinaSeleccionada === 'letras'}
+                    <div class="form-section">
+                        <label for="sinopsisLetras">Breve sinopsis:</label>
+                        <textarea id="sinopsisLetras" bind:value={formData.sinopsis} required></textarea>
+
+                        <label for="declaracionJuradaLetras">Declaración jurada sobre derechos de autor:</label>
+                        <input type="file" id="declaracionJuradaLetras" accept=".pdf,.doc,.docx" on:change={handleFileChange} required />
+
+                        <h4>Datos personales del autor</h4>
+                        <div class="datos-personales">
+                            <input type="text" placeholder="Nombre" bind:value={formData.nombreAutor} required />
+                            <input type="text" placeholder="Apellido" bind:value={formData.apellidoAutor} required />
+                            <input type="text" placeholder="DNI" bind:value={formData.dniAutor} required />
                         </div>
 
-                        <label for="dossierTecnico">Dossier técnico (descripción de materiales, técnica, pesos, medidas, plano, etc.):</label>
-                        <textarea id="dossierTecnico" bind:value={formData.dossierTecnico} required></textarea>
-                    {:else}
                         <h4>Formato de presentación</h4>
                         <div class="formato-presentacion">
                             <div class="radio-option">
                                 <input 
                                     type="radio" 
-                                    id="formatoDigitalHistorieta" 
-                                    name="formatoHistorieta" 
+                                    id="formatoDigital" 
+                                    name="formatoPresentacion" 
                                     value="digital" 
-                                    bind:group={formData.formatoHistorieta}
+                                    bind:group={formData.formatoPresentacion}
                                 />
-                                <label for="formatoDigitalHistorieta">Formato Digital</label>
+                                <label for="formatoDigital">Formato Digital</label>
                                 <p class="formato-descripcion">
-                                    Deberá enviarse en formato PDF
+                                    Deberá ser enviado en formato PDF con el asunto "Obra – Arandú – Rubro Letras" 
+                                    y adjuntar datos del autor/a y de la producción (breve reseña o descripción de la obra)
                                 </p>
                             </div>
 
                             <div class="radio-option">
                                 <input 
                                     type="radio" 
-                                    id="formatoImpresoHistorieta" 
-                                    name="formatoHistorieta" 
+                                    id="formatoImpreso" 
+                                    name="formatoPresentacion" 
                                     value="impreso" 
-                                    bind:group={formData.formatoHistorieta}
+                                    bind:group={formData.formatoPresentacion}
                                 />
-                                <label for="formatoImpresoHistorieta">Formato Impreso</label>
+                                <label for="formatoImpreso">Formato Impreso</label>
                                 <p class="formato-descripcion">
-                                    Se deberán entregar tres (3) ejemplares
+                                    Se deberán entregar tres (3) copias del material editado
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                {/if}
+
+                {#if disciplinaSeleccionada === 'fotografia'}
+                    <div class="form-section">
+                        <label for="descripcionFotografia">Descripción de la obra:</label>
+                        <textarea id="descripcionFotografia" bind:value={formData.descripcion} required></textarea>
+
+                        <label for="declaracionJuradaFotografia">Declaración jurada sobre derechos de autor:</label>
+                        <input type="file" id="declaracionJuradaFotografia" accept=".pdf,.doc,.docx" on:change={handleFileChange} required />
+
+                        <label for="tecnica">Técnica / Descripción del material entregado:</label>
+                        <textarea id="tecnica" bind:value={formData.tecnica} required></textarea>
+
+                        <h4>Datos personales del autor</h4>
+                        <div class="datos-personales">
+                            <input type="text" placeholder="Nombre" bind:value={formData.nombreAutor} required />
+                            <input type="text" placeholder="Apellido" bind:value={formData.apellidoAutor} required />
+                            <input type="text" placeholder="DNI" bind:value={formData.dniAutor} required />
+                        </div>
+
+                        <h4>Formato de presentación</h4>
+                        <div class="formato-presentacion">
+                            <div class="radio-option">
+                                <input 
+                                    type="radio" 
+                                    id="formatoDigitalFoto" 
+                                    name="formatoPresentacionFoto" 
+                                    value="digital" 
+                                    bind:group={formData.formatoPresentacionFoto}
+                                />
+                                <label for="formatoDigitalFoto">Formato Digital</label>
+                                <p class="formato-descripcion">
+                                    Deberá enviarse el material en formato JPG ó PDF con el asunto "Obra – Arandú – Rubro Fotografía" 
+                                    y adjuntar datos del autor/a y de la producción (breve reseña o descripción de la obra)
+                                </p>
+                            </div>
+
+                            <div class="radio-option">
+                                <input 
+                                    type="radio" 
+                                    id="formatoImpresoFoto" 
+                                    name="formatoPresentacionFoto" 
+                                    value="impreso" 
+                                    bind:group={formData.formatoPresentacionFoto}
+                                />
+                                <label for="formatoImpresoFoto">Formato Impreso</label>
+                                <p class="formato-descripcion">
+                                    Se deberán entregar tres (3) copias con un tamaño mínimo de 15x21 cm
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                {/if}
+
+                {#if disciplinaSeleccionada === 'artesVisuales'}
+                    <div class="form-section">
+                        <label for="descripcionArtesVisuales">Descripción de la obra:</label>
+                        <textarea id="descripcionArtesVisuales" bind:value={formData.descripcion} required></textarea>
+
+                        <label for="declaracionJuradaArtesVisuales">Declaración jurada sobre derecho de autor:</label>
+                        <input type="file" id="declaracionJuradaArtesVisuales" accept=".pdf,.doc,.docx" on:change={handleFileChange} required />
+
+                        <label for="tecnicaArtesVisuales">Técnica:</label>
+                        <input type="text" id="tecnicaArtesVisuales" bind:value={formData.tecnica} required />
+
+                        <h4>Datos personales</h4>
+                        <div class="datos-personales">
+                            <input type="text" placeholder="Nombre" bind:value={formData.nombreAutor} required />
+                            <input type="text" placeholder="Apellido" bind:value={formData.apellidoAutor} required />
+                            <input type="text" placeholder="DNI" bind:value={formData.dniAutor} required />
+                        </div>
+
+                        <h4>Tipo de obra</h4>
+                        <div class="tipo-obra">
+                            <div class="radio-option">
+                                <input 
+                                    type="radio" 
+                                    id="tipoBidimensional" 
+                                    name="tipoObra" 
+                                    value="bidimensional" 
+                                    bind:group={formData.tipoObra}
+                                />
+                                <label for="tipoBidimensional">Obra Bidimensional (pintura, ilustración, grabado, dibujo)</label>
+                                <p class="formato-descripcion">
+                                    Tamaño mínimo: 15x21 cm<br>
+                                    Tamaño máximo: 200 cm (incluyendo marco y/o soporte)
+                                </p>
+                            </div>
+
+                            <div class="radio-option">
+                                <input 
+                                    type="radio" 
+                                    id="tipoTridimensional" 
+                                    name="tipoObra" 
+                                    value="tridimensional" 
+                                    bind:group={formData.tipoObra}
+                                />
+                                <label for="tipoTridimensional">Obra Tridimensional (escultura, objetos, instalaciones)</label>
+                                <p class="formato-descripcion">
+                                    Tamaño mínimo: 15x21x5 cm<br>
+                                    Tamaño máximo: 200 cm
+                                </p>
+                            </div>
+
+                            <div class="radio-option">
+                                <input 
+                                    type="radio" 
+                                    id="tipoHistorieta" 
+                                    name="tipoObra" 
+                                    value="historieta" 
+                                    bind:group={formData.tipoObra}
+                                />
+                                <label for="tipoHistorieta">Historieta/Comic</label>
+                                <p class="formato-descripcion">
+                                    Extensión máxima: 90 páginas<br>
+                                    Todas las páginas deben estar numeradas
                                 </p>
                             </div>
                         </div>
 
-                        <label for="sinopsisHistorieta">Síntesis argumental (sinopsis de hasta 1 carilla):</label>
-                        <textarea id="sinopsisHistorieta" bind:value={formData.sinopsisHistorieta} required></textarea>
+                        {#if formData.tipoObra !== 'historieta'}
+                            <h4>Medidas de la obra</h4>
+                            <div class="medidas-form">
+                                <div class="medida-input">
+                                    <label for="ancho">Ancho (cm):</label>
+                                    <input type="number" id="ancho" bind:value={formData.medidas.ancho} required min="15" max="200" />
+                                </div>
+                                <div class="medida-input">
+                                    <label for="alto">Alto (cm):</label>
+                                    <input type="number" id="alto" bind:value={formData.medidas.alto} required min="21" max="200" />
+                                </div>
+                                {#if formData.tipoObra === 'tridimensional'}
+                                    <div class="medida-input">
+                                        <label for="profundidad">Profundidad (cm):</label>
+                                        <input type="number" id="profundidad" bind:value={formData.medidas.profundidad} required min="5" max="200" />
+                                    </div>
+                                {/if}
+                            </div>
 
-                        <label for="numeroPaginas">Número de páginas:</label>
-                        <input type="number" id="numeroPaginas" bind:value={formData.numeroPaginas} required min="1" max="90" />
+                            <label for="dossierTecnico">Dossier técnico (descripción de materiales, técnica, pesos, medidas, plano, etc.):</label>
+                            <textarea id="dossierTecnico" bind:value={formData.dossierTecnico} required></textarea>
+                        {:else}
+                            <h4>Formato de presentación</h4>
+                            <div class="formato-presentacion">
+                                <div class="radio-option">
+                                    <input 
+                                        type="radio" 
+                                        id="formatoDigitalHistorieta" 
+                                        name="formatoHistorieta" 
+                                        value="digital" 
+                                        bind:group={formData.formatoHistorieta}
+                                    />
+                                    <label for="formatoDigitalHistorieta">Formato Digital</label>
+                                    <p class="formato-descripcion">
+                                        Deberá enviarse en formato PDF
+                                    </p>
+                                </div>
+
+                                <div class="radio-option">
+                                    <input 
+                                        type="radio" 
+                                        id="formatoImpresoHistorieta" 
+                                        name="formatoHistorieta" 
+                                        value="impreso" 
+                                        bind:group={formData.formatoHistorieta}
+                                    />
+                                    <label for="formatoImpresoHistorieta">Formato Impreso</label>
+                                    <p class="formato-descripcion">
+                                        Se deberán entregar tres (3) ejemplares
+                                    </p>
+                                </div>
+                            </div>
+
+                            <label for="sinopsisHistorieta">Síntesis argumental (sinopsis de hasta 1 carilla):</label>
+                            <textarea id="sinopsisHistorieta" bind:value={formData.sinopsisHistorieta} required></textarea>
+
+                            <label for="numeroPaginas">Número de páginas:</label>
+                            <input type="number" id="numeroPaginas" bind:value={formData.numeroPaginas} required min="1" max="90" />
+                        {/if}
+
+                        <label for="materialEntregado">Descripción del material entregado:</label>
+                        <textarea id="materialEntregado" bind:value={formData.materialEntregado} required></textarea>
+                    </div>
+                {/if}
+
+                {#if disciplinaSeleccionada === 'artesAudiovisuales'}
+                    <div class="form-section">
+                        <label for="sinopsisAudiovisual">Breve sinopsis:</label>
+                        <textarea id="sinopsisAudiovisual" bind:value={formData.sinopsis} required></textarea>
+
+                        <label for="descripcionProyecto">Descripción del proyecto:</label>
+                        <textarea 
+                            id="descripcionProyecto" 
+                            bind:value={formData.descripcionProyecto} 
+                            required 
+                            placeholder="Propuesta narrativa, artística y estética: recursos expresivos y formales, tratamiento audiovisual y referencias"
+                        ></textarea>
+
+                        <label for="declaracionJuradaAudiovisual">Declaración jurada sobre derecho de autor:</label>
+                        <input type="file" id="declaracionJuradaAudiovisual" accept=".pdf,.doc,.docx" on:change={handleFileChange} required />
+
+                        <div class="grid-form">
+                            <div class="form-group">
+                                <label for="duracionAudiovisual">Duración:</label>
+                                <input type="text" id="duracionAudiovisual" bind:value={formData.duracion} required />
+                            </div>
+
+                            <div class="form-group">
+                                <label for="generoAudiovisual">Género:</label>
+                                <input type="text" id="generoAudiovisual" bind:value={formData.genero} required />
+                            </div>
+
+                            <div class="form-group">
+                                <label for="destinatariosAudiovisual">Destinatarios:</label>
+                                <input type="text" id="destinatariosAudiovisual" bind:value={formData.destinatarios} required />
+                            </div>
+                        </div>
+
+                        <h4>Datos del referente del proyecto</h4>
+                        <div class="datos-personales">
+                            <input type="text" placeholder="Nombre" bind:value={formData.nombreReferente} required />
+                            <input type="text" placeholder="Apellido" bind:value={formData.apellidoReferente} required />
+                            <input type="text" placeholder="DNI" bind:value={formData.dniReferente} required />
+                        </div>
+
+                        <h4>Equipo técnico, colaboradores e integrantes</h4>
+                        {#each formData.equipoTecnico as integrante, i}
+                            <div class="integrante-form">
+                                <input type="text" placeholder="Rol" bind:value={integrante.rol} required />
+                                <input type="text" placeholder="Nombre" bind:value={integrante.nombre} required />
+                                <input type="text" placeholder="Apellido" bind:value={integrante.apellido} required />
+                                <input type="text" placeholder="DNI" bind:value={integrante.dni} required />
+                                <button type="button" on:click={() => formData.equipoTecnico = formData.equipoTecnico.filter((_, index) => index !== i)}>Eliminar</button>
+                            </div>
+                        {/each}
+                        <button type="button" on:click={() => formData.equipoTecnico = [...formData.equipoTecnico, { rol: '', nombre: '', apellido: '', dni: '' }]}>
+                            Agregar integrante/colaborador
+                        </button>
+
+                        <div class="info-box">
+                            <p><strong>Nota:</strong> El material deberá ser enviado en formato de video o un link de visualización web, con el asunto "Obra – Arandú – Rubro Audiovisual".</p>
+                        </div>
+                    </div>
+                {/if}
+
+                <button type="submit" disabled={enviando}>
+                    {#if enviando}
+                        <span class="spinner"></span>
+                        Enviando...
+                    {:else}
+                        Enviar Formulario
                     {/if}
-
-                    <label for="materialEntregado">Descripción del material entregado:</label>
-                    <textarea id="materialEntregado" bind:value={formData.materialEntregado} required></textarea>
-                </div>
-            {/if}
-
-            {#if disciplinaSeleccionada === 'artesAudiovisuales'}
-                <div class="form-section">
-                    <label for="sinopsisAudiovisual">Breve sinopsis:</label>
-                    <textarea id="sinopsisAudiovisual" bind:value={formData.sinopsis} required></textarea>
-
-                    <label for="descripcionProyecto">Descripción del proyecto:</label>
-                    <textarea 
-                        id="descripcionProyecto" 
-                        bind:value={formData.descripcionProyecto} 
-                        required 
-                        placeholder="Propuesta narrativa, artística y estética: recursos expresivos y formales, tratamiento audiovisual y referencias"
-                    ></textarea>
-
-                    <label for="declaracionJuradaAudiovisual">Declaración jurada sobre derecho de autor:</label>
-                    <input type="file" id="declaracionJuradaAudiovisual" accept=".pdf,.doc,.docx" on:change={handleFileChange} required />
-
-                    <div class="grid-form">
-                        <div class="form-group">
-                            <label for="duracionAudiovisual">Duración:</label>
-                            <input type="text" id="duracionAudiovisual" bind:value={formData.duracion} required />
-                        </div>
-
-                        <div class="form-group">
-                            <label for="generoAudiovisual">Género:</label>
-                            <input type="text" id="generoAudiovisual" bind:value={formData.genero} required />
-                        </div>
-
-                        <div class="form-group">
-                            <label for="destinatariosAudiovisual">Destinatarios:</label>
-                            <input type="text" id="destinatariosAudiovisual" bind:value={formData.destinatarios} required />
-                        </div>
-                    </div>
-
-                    <h4>Datos del referente del proyecto</h4>
-                    <div class="datos-personales">
-                        <input type="text" placeholder="Nombre" bind:value={formData.nombreReferente} required />
-                        <input type="text" placeholder="Apellido" bind:value={formData.apellidoReferente} required />
-                        <input type="text" placeholder="DNI" bind:value={formData.dniReferente} required />
-                    </div>
-
-                    <h4>Equipo técnico, colaboradores e integrantes</h4>
-                    {#each formData.equipoTecnico as integrante, i}
-                        <div class="integrante-form">
-                            <input type="text" placeholder="Rol" bind:value={integrante.rol} required />
-                            <input type="text" placeholder="Nombre" bind:value={integrante.nombre} required />
-                            <input type="text" placeholder="Apellido" bind:value={integrante.apellido} required />
-                            <input type="text" placeholder="DNI" bind:value={integrante.dni} required />
-                            <button type="button" on:click={() => formData.equipoTecnico = formData.equipoTecnico.filter((_, index) => index !== i)}>Eliminar</button>
-                        </div>
-                    {/each}
-                    <button type="button" on:click={() => formData.equipoTecnico = [...formData.equipoTecnico, { rol: '', nombre: '', apellido: '', dni: '' }]}>
-                        Agregar integrante/colaborador
-                    </button>
-
-                    <div class="info-box">
-                        <p><strong>Nota:</strong> El material deberá ser enviado en formato de video o un link de visualización web, con el asunto "Obra – Arandú – Rubro Audiovisual".</p>
-                    </div>
-                </div>
-            {/if}
-
-            <button type="submit">Enviar Formulario</button>
-        </form>
-    {:else}
-        <div class="mensaje-aceptacion">
-            <p>Para continuar con la inscripción, por favor lea y acepte las bases y condiciones de participación.</p>
-        </div>
+                </button>
+            </form>
+        {:else}
+            <div class="mensaje-aceptacion">
+                <p>Para continuar con la inscripción, por favor lea y acepte las bases y condiciones de participación.</p>
+            </div>
+        {/if}
     {/if}
 </div>
 
@@ -1160,5 +1351,65 @@
         h4 {
             font-size: 1.2em;
         }
+    }
+    
+    /* Estilos para el mensaje de éxito */
+    .mensaje-exito {
+        background-color: white;
+        border-radius: 12px;
+        padding: 40px;
+        text-align: center;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        margin: 30px auto;
+        max-width: 600px;
+    }
+    
+    .mensaje-exito h2 {
+        color: #2c3e50;
+        margin-bottom: 15px;
+    }
+    
+    .mensaje-exito p {
+        color: #5a6268;
+        font-size: 1.1em;
+        line-height: 1.5;
+    }
+
+    /* Añadir estilos para mensajes de error */
+    .mensaje-error {
+        display: flex;
+        align-items: center;
+        background-color: #FEE2E2;
+        color: #B91C1C;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid #FECACA;
+    }
+
+    .mensaje-error p {
+        margin: 0;
+        font-size: 1rem;
+    }
+    
+    /* Estilos para el botón con estado de carga */
+    button:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+    }
+
+    .spinner {
+        display: inline-block;
+        width: 1rem;
+        height: 1rem;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: white;
+        animation: spin 1s linear infinite;
+        margin-right: 0.5rem;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
     }
 </style> 

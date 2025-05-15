@@ -1,0 +1,225 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model campos_formulario {
+  id            Int                    @id @default(autoincrement())
+  formulario_id Int
+  etiqueta      String                 @db.VarChar(255)
+  tipo          campos_formulario_tipo
+  obligatorio   Boolean?               @default(false)
+  opciones      Json?
+  orden         Int                    @default(0)
+  formularios   formularios            @relation(fields: [formulario_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "campos_formulario_ibfk_1")
+
+  @@index([formulario_id], map: "idx_campos_formulario")
+}
+
+model disciplinas {
+  id                    Int                     @id @default(autoincrement())
+  nombre                String                  @unique(map: "nombre") @db.VarChar(255)
+  descripcion           String?                 @db.Text
+  formularios           formularios[]
+  usuarios              usuarios[]
+  inscripciones_artisticas inscripciones_artisticas[]
+}
+
+model formularios {
+  id                    Int                     @id @default(autoincrement())
+  usuario_id            Int
+  disciplina_id         Int
+  titulo                String                  @db.VarChar(255)
+  descripcion           String?                 @db.Text
+  fecha_creacion        DateTime?               @default(now()) @db.Timestamp(0)
+  fecha_modificacion    DateTime?               @default(now()) @db.Timestamp(0)
+  estado                formularios_estado?     @default(borrador)
+  campos_formulario     campos_formulario[]
+  usuarios              usuarios                @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "formularios_ibfk_1")
+  disciplinas           disciplinas             @relation(fields: [disciplina_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "formularios_ibfk_2")
+  respuestas_formulario respuestas_formulario[]
+
+  @@index([disciplina_id], map: "idx_formularios_disciplina")
+  @@index([usuario_id], map: "idx_formularios_usuario")
+}
+
+model respuestas_formulario {
+  id            Int         @id @default(autoincrement())
+  formulario_id Int
+  fecha_envio   DateTime?   @default(now()) @db.Timestamp(0)
+  ip_remitente  String?     @db.VarChar(45)
+  datos         Json
+  formularios   formularios @relation(fields: [formulario_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "respuestas_formulario_ibfk_1")
+
+  @@index([formulario_id], map: "idx_respuestas_formulario")
+}
+
+model usuarios {
+  id                    Int                     @id @default(autoincrement())
+  nombre                String                  @db.VarChar(255)
+  email                 String                  @unique(map: "email") @db.VarChar(255)
+  password              String                  @db.VarChar(255)
+  es_admin              Boolean?                @default(false)
+  disciplina_id         Int?
+  fecha_creacion        DateTime?               @default(now()) @db.Timestamp(0)
+  ultimo_acceso         DateTime?               @db.Timestamp(0)
+  formularios           formularios[]
+  disciplinas           disciplinas?            @relation(fields: [disciplina_id], references: [id], onUpdate: NoAction, map: "usuarios_ibfk_1")
+  inscripciones_artisticas inscripciones_artisticas[]
+
+  @@index([disciplina_id], map: "idx_usuarios_disciplina")
+}
+
+enum campos_formulario_tipo {
+  texto
+  numero
+  email
+  fecha
+  seleccion
+  multiple
+  archivo
+  parrafo
+}
+
+enum formularios_estado {
+  borrador
+  publicado
+  cerrado
+}
+
+// Modelos para inscripciones artísticas
+model inscripciones_artisticas {
+  id                  Int                   @id @default(autoincrement())
+  nombre              String                @db.VarChar(255)
+  disciplina_id       Int
+  email               String                @db.VarChar(255)
+  telefono            String                @db.VarChar(50)
+  descripcion         String?               @db.Text
+  tipo_contenido      tipo_contenido        @default(archivo)
+  link_contenido      String?               @db.VarChar(512)
+  archivo_contenido   String?               @db.VarChar(255)
+  fecha_creacion      DateTime              @default(now()) @db.Timestamp(0)
+  fecha_modificacion  DateTime              @default(now()) @updatedAt @db.Timestamp(0)
+  estado              estado_inscripcion    @default(pendiente)
+  usuario_id          Int
+  
+  // Campos específicos
+  ficha_artistica     String?               @db.Text
+  historia_solista    String?               @db.Text
+  autor               String?               @db.VarChar(255)
+  duracion            String?               @db.VarChar(50)
+  genero              String?               @db.VarChar(100)
+  destinatarios       String?               @db.VarChar(255)
+  sinopsis            String?               @db.Text
+  fecha_estreno       DateTime?             @db.Date
+  numero_funciones    String?               @db.VarChar(20)
+  nombre_grupo        String?               @db.VarChar(255)
+  es_concertado       Boolean?              @default(false)
+  historia            String?               @db.Text
+  descripcion_material String?              @db.Text
+  nombre_autor        String?               @db.VarChar(255)
+  apellido_autor      String?               @db.VarChar(255)
+  dni_autor           String?               @db.VarChar(20)
+  tecnica             String?               @db.VarChar(255)
+  material_entregado  String?               @db.Text
+  tipo_obra           tipo_obra?
+  medidas_ancho       Decimal?              @db.Decimal(10, 2)
+  medidas_alto        Decimal?              @db.Decimal(10, 2)
+  medidas_profundidad Decimal?              @db.Decimal(10, 2)
+  dossier_tecnico     String?               @db.Text
+  sinopsis_historieta String?               @db.Text
+  numero_paginas      Int?
+  formato_presentacion formato_presentacion?
+  nombre_referente    String?               @db.VarChar(255)
+  apellido_referente  String?               @db.VarChar(255)
+  dni_referente       String?               @db.VarChar(20)
+  
+  // Relaciones
+  disciplinas         disciplinas           @relation(fields: [disciplina_id], references: [id], onDelete: Cascade)
+  usuarios            usuarios              @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+  integrantes         integrantes_inscripcion[]
+  archivos            archivos_inscripcion[]
+
+  @@index([disciplina_id], map: "idx_inscripciones_disciplina")
+  @@index([usuario_id], map: "idx_inscripciones_usuario")
+  @@index([estado], map: "idx_inscripciones_estado")
+}
+
+model integrantes_inscripcion {
+  id              Int                   @id @default(autoincrement())
+  inscripcion_id  Int
+  tipo            tipo_integrante
+  rol             String?               @db.VarChar(100)
+  nombre          String                @db.VarChar(255)
+  apellido        String                @db.VarChar(255)
+  dni             String                @db.VarChar(20)
+  inscripcion     inscripciones_artisticas @relation(fields: [inscripcion_id], references: [id], onDelete: Cascade)
+
+  @@index([inscripcion_id], map: "idx_integrantes_inscripcion")
+}
+
+model archivos_inscripcion {
+  id              Int                   @id @default(autoincrement())
+  inscripcion_id  Int
+  tipo            String                @db.VarChar(50)
+  nombre_original String                @db.VarChar(255)
+  ruta_archivo    String                @db.VarChar(512)
+  tipo_mime       String?               @db.VarChar(100)
+  tamanio         Int?
+  fecha_subida    DateTime              @default(now()) @db.Timestamp(0)
+  inscripcion     inscripciones_artisticas @relation(fields: [inscripcion_id], references: [id], onDelete: Cascade)
+
+  @@index([inscripcion_id], map: "idx_archivos_inscripcion")
+}
+
+model logs_sistema {
+  id           Int        @id @default(autoincrement())
+  nivel        nivel_log
+  mensaje      String     @db.Text
+  detalles     Json?
+  timestamp    DateTime   @default(now()) @db.Timestamp(0)
+  ip           String?    @db.VarChar(45)
+}
+
+enum tipo_contenido {
+  archivo
+  link
+}
+
+enum estado_inscripcion {
+  pendiente
+  aprobado
+  rechazado
+}
+
+enum tipo_obra {
+  bidimensional
+  tridimensional
+  historieta
+}
+
+enum formato_presentacion {
+  digital
+  impreso
+}
+
+enum tipo_integrante {
+  en_escena
+  fuera_escena
+  elenco
+  integrante
+  colaborador
+  equipo_tecnico
+}
+
+enum nivel_log {
+  INFO
+  WARNING
+  ERROR
+  DEBUG
+}

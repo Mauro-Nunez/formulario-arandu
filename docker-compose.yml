@@ -1,0 +1,18 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: formulario-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: formularios_db
+      MYSQL_USER: formulario_user
+      MYSQL_PASSWORD: formulario_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init-db:/docker-entrypoint-initdb.d
+
+volumes:
+  mysql_data: 

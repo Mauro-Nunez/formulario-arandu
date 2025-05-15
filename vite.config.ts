@@ -4,7 +4,11 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-	plugins: [tailwindcss(), sveltekit()],
+	plugins: [
+		// Reactivamos Tailwind con configuración simple
+		tailwindcss(),
+		sveltekit()
+	],
 	test: {
 		workspace: [
 			{
