@@ -285,7 +285,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
             </svg>
             <h2 class="text-2xl font-bold mt-4">¡Inscripción Enviada con Éxito!</h2>
-            <p class="mt-2">Gracias por participar en la Convocatoria Bienal de Artes 2024.</p>
+            <p class="mt-2">Gracias por participar en la Convocatoria Bienal de Artes .</p>
             <p class="mt-2">Será redirigido en unos segundos...</p>
         </div>
     {:else}
@@ -295,8 +295,6 @@
             <div class="info-importante">
                 <h3>Período de Evaluación</h3>
                 <p>Se evaluará la producción artística bienal comprendida desde la conformación del jurado hasta 40 días antes de la premiación (según lo establecido en Art. 13 del CAPÍTULO II REGLAMENTO DE LOS PREMIOS establecido en el ANEXO ÚNICO de la ORDENANZA III Nº 121).</p>
-                <p><strong>Fecha de premiación:</strong> Jueves 20 de Noviembre</p>
-                <p><strong>Apertura de sobres:</strong> Jueves 09 de Octubre del 2024 (Sesión Ordinaria del HCD)</p>
             </div>
 
             <div class="requisitos-generales">
