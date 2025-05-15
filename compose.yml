@@ -1,0 +1,75 @@
+services:
+  reverse-proxy:
+    image: traefik
+    container_name: traefik
+    command:
+      - --log.level=DEBUG  # Habilita logs detallados
+      - --accesslog=true    # Activa el log de accesos
+      # - --api.insecure=true # Disable in production
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --entrypoints.websecure.address=:443
+      - --certificatesResolvers.main-resolver.acme.httpChallenge=true
+      - --certificatesResolvers.main-resolver.acme.httpChallenge.entrypoint=web
+      - --certificatesResolvers.main-resolver.acme.email=mistec.capital@gmail.com
+      - --certificatesResolvers.main-resolver.acme.storage=/letsencrypt/acme.json
+      - --experimental.fastProxy  # 🔥 Habilita fastProxy
+
+    ports:
+      - "80:80"
+      - "443:443"
+    userns_mode: host
+    volumes:
+      - cert-data:/letsencrypt
+      - /var/run/docker.sock:/var/run/docker.sock
+  app:
+    build:
+      context: ./build
+      dockerfile: ../Dockerfile
+    image: ${IMAGE_NAME}
+    container_name: ${CONTAINER_NAME}
+    env_file:
+      - ./.env.prod
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ${REMOTE_PATH}/prod.db:/usr/src/app/prisma/dev.db
+    # ports:
+      # - 3000:3000
+    labels:
+      traefik.enable: 'true'
+      
+      # Router principal para el dominio sin www
+      traefik.http.routers.app-http.entrypoints: websecure
+      traefik.http.routers.app-http.rule: Host(`${CONTAINER_HOST}`)
+      traefik.http.routers.app-http.tls.certresolver: main-resolver
+      traefik.http.services.app.loadbalancer.server.port: '3000'
+    deploy:
+      resources:
+        limits:
+          memory: 2G # Limita a 2GB de RAM
+          cpus: "2.0" # Usa hasta 2 CPUs
+        reservations:
+          memory: 1G # Reserva al menos 1GB de RAM
+  # db:
+  #   image: mysql:8.0
+  #   container_name: formulario-mysql
+  #   restart: always
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+  #     MYSQL_DATABASE: ${MYSQL_DATABASE}
+  #     MYSQL_USER: ${MYSQL_USER}
+  #     MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+  #   ports:
+  #     - "3306:3306"
+  #   volumes:
+  #     - mysql_data:/var/lib/mysql
+  #     - ./init-db:/docker-entrypoint-initdb.d
+
+volumes:
+  # mysql_data: 
+  cert-data:
+    name: cert-data
