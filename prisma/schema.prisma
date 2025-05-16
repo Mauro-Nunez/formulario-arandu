@@ -70,7 +70,6 @@ model usuarios {
   ultimo_acceso         DateTime?               @db.Timestamp(0)
   formularios           formularios[]
   disciplinas           disciplinas?            @relation(fields: [disciplina_id], references: [id], onUpdate: NoAction, map: "usuarios_ibfk_1")
-  inscripciones_artisticas inscripciones_artisticas[]
 
   @@index([disciplina_id], map: "idx_usuarios_disciplina")
 }
