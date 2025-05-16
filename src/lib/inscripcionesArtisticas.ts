@@ -26,7 +26,7 @@ export async function guardarInscripcionArtistica(inscripcion: Partial<Inscripci
             tipo_contenido: inscripcion.tipoContenido,
             link_contenido: inscripcion.linkContenido,
             archivo_contenido: inscripcion.archivoContenido,
-            usuario_id: inscripcion.usuario_id,
+            // usuario_id: inscripcion.usuario_id,
             // Campos específicos según disciplina
             ficha_artistica: inscripcion.fichaArtistica,
             historia_solista: inscripcion.historiaSolista,

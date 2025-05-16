@@ -137,7 +137,7 @@
             formDataToSend.append('descripcion', formData.descripcion || '');
             formDataToSend.append('tipoContenido', formData.tipoContenido);
             formDataToSend.append('linkContenido', formData.linkContenido || '');
-            formDataToSend.append('usuario_id', ($userStore?.id || 1).toString());
+            // formDataToSend.append('usuario_id', ($userStore?.id || 1).toString());
             
             // Agregar el archivo si existe
             if (formData.tipoContenido === 'archivo' && formData.archivoContenido) {
@@ -234,7 +234,7 @@
             
             // Después de 3 segundos, redirigimos a la página principal
             setTimeout(() => {
-                // window.location.reload();
+                window.location.reload();
             }, 3000)
         } catch (error) {
             // Capturamos el error y lo registramos
