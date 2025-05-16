@@ -1,11 +1,11 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { guardarInscripcionArtistica } from '$lib/inscripcionesArtisticas';
-import { logger, LogLevel } from '$lib/logger';
+import { logger } from '$lib/logger';
 import fs from 'fs';
 import path from 'path';
-import { promises as fsPromises } from 'fs';
 import crypto from 'crypto';
+import { InscriptionFileService } from '$lib/server/file.service';
 
 // Directorio para almacenar archivos subidos
 const UPLOAD_DIR = 'static/uploads';
@@ -50,26 +50,17 @@ export const POST: RequestHandler = async ({ request }) => {
         }
       } 
       // Si es un File, procesarlo adecuadamente
-      else if (key === 'archivoContenido' && value instanceof File) {
-        // Guardar el archivo en disco
+      else if (['archivoContenido', 'declaracionJurada', 'fichaArtistica'].includes(key) && value instanceof File) {
         const file = value;
         const fileName = getUniqueFileName(file.name);
-        const filePath = path.join(UPLOAD_DIR, fileName);
+        const {path} = await InscriptionFileService.writeFile(file, fileName);
         
-        // Obtener el ArrayBuffer del archivo
-        const arrayBuffer = await file.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-        
-        // Escribir el archivo en disco de forma asíncrona
-        await fsPromises.writeFile(filePath, buffer);
-        
-        // Guardar la ruta relativa en la base de datos
-        inscripcionData[key] = `uploads/${fileName}`;
+        inscripcionData[key] = path
         
         logger.info('Archivo guardado correctamente', {
           nombre_original: file.name,
           nombre_guardado: fileName,
-          ruta: filePath,
+          ruta: path,
           tamaño: file.size
         });
       } 

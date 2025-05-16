@@ -118,6 +118,7 @@ export class Logger {
     // En un entorno Svelte normal, utilizaríamos una API REST o
     // un endpoint específico para guardar logs en el servidor
     try {
+      if(!localStorage) return
       localStorage.setItem('lastErrorLog', logEntry);
       
       // Obtener logs existentes

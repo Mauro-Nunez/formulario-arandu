@@ -106,7 +106,6 @@ model inscripciones_artisticas {
   fecha_creacion      DateTime              @default(now()) @db.Timestamp(0)
   fecha_modificacion  DateTime              @default(now()) @updatedAt @db.Timestamp(0)
   estado              estado_inscripcion    @default(pendiente)
-  usuario_id          Int
   
   // Campos específicos
   ficha_artistica     String?               @db.Text
@@ -138,15 +137,14 @@ model inscripciones_artisticas {
   nombre_referente    String?               @db.VarChar(255)
   apellido_referente  String?               @db.VarChar(255)
   dni_referente       String?               @db.VarChar(20)
+  declaracion_jurada  String?               @db.VarChar(255)
   
   // Relaciones
   disciplinas         disciplinas           @relation(fields: [disciplina_id], references: [id], onDelete: Cascade)
-  usuarios            usuarios              @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
   integrantes         integrantes_inscripcion[]
   archivos            archivos_inscripcion[]
 
   @@index([disciplina_id], map: "idx_inscripciones_disciplina")
-  @@index([usuario_id], map: "idx_inscripciones_usuario")
   @@index([estado], map: "idx_inscripciones_estado")
 }
 

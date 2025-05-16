@@ -11,6 +11,7 @@ export interface Inscripcion {
     tipoContenido: 'archivo' | 'link';
     linkContenido?: string;
     archivoContenido?: string;
+    declaracionJurada?: string;
     fecha_creacion: string;
     fecha_modificacion: string;
     estado: 'pendiente' | 'aprobado' | 'rechazado';

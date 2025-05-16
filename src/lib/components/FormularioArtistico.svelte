@@ -9,7 +9,6 @@
     let formData = {
         nombre: '',
         descripcion: '',
-        archivos: [] as File[],
         // Campos de contacto comunes
         email: '',
         telefono: '',
@@ -17,6 +16,8 @@
         tipoContenido: 'archivo', // 'archivo' o 'link'
         linkContenido: '',
         archivoContenido: null as File | null,
+        declaracionJurada: null as File | null,
+        fichaArtistica:  null as File | null,
         // Campos para teatro
         autor: '',
         duracion: '',
@@ -64,7 +65,6 @@
         dniReferente: '',
         equipoTecnico: [] as { rol: string, nombre: string, apellido: string, dni: string }[],
         // Campos para danza
-        fichaArtistica: '',
         historiaSolista: '',
         integrantesEnEscena: [] as { nombre: string, apellido: string, dni: string }[],
         integrantesFueraEscena: [] as { rol: string, nombre: string, apellido: string, dni: string }[]
@@ -152,13 +152,14 @@
             
             // Agregar campos específicos según disciplina en formato JSON
             if (disciplinaSeleccionada === 'danza') {
-                formDataToSend.append('fichaArtistica', formData.fichaArtistica || '');
+                formDataToSend.append('declaracionJurada', formData.declaracionJurada || '');
                 formDataToSend.append('historiaSolista', formData.historiaSolista || '');
                 formDataToSend.append('integrantesEnEscena', JSON.stringify(formData.integrantesEnEscena || []));
                 formDataToSend.append('integrantesFueraEscena', JSON.stringify(formData.integrantesFueraEscena || []));
             }
             
             if (disciplinaSeleccionada === 'teatro') {
+                formDataToSend.append('declaracionJurada', formData.declaracionJurada || '');
                 formDataToSend.append('autor', formData.autor || '');
                 formDataToSend.append('duracion', formData.duracion || '');
                 formDataToSend.append('genero', formData.genero || '');
@@ -171,13 +172,16 @@
             }
             
             if (disciplinaSeleccionada === 'musica') {
+                formDataToSend.append('declaracionJurada', formData.declaracionJurada || '');
                 formDataToSend.append('historia', formData.historia || '');
+                formDataToSend.append('fichaArtistica', formData.fichaArtistica || '');
                 formDataToSend.append('descripcionMaterial', formData.descripcionMaterial || '');
                 formDataToSend.append('integrantes', JSON.stringify(formData.integrantes || []));
                 formDataToSend.append('colaboradores', JSON.stringify(formData.colaboradores || []));
             }
             
             if (disciplinaSeleccionada === 'letras') {
+                formDataToSend.append('declaracionJurada', formData.declaracionJurada || '');
                 formDataToSend.append('nombreAutor', formData.nombreAutor || '');
                 formDataToSend.append('apellidoAutor', formData.apellidoAutor || '');
                 formDataToSend.append('dniAutor', formData.dniAutor || '');
@@ -185,6 +189,7 @@
             }
             
             if (['fotografia', 'artesVisuales'].includes(disciplinaSeleccionada)) {
+                formDataToSend.append('declaracionJurada', formData.declaracionJurada || '');
                 formDataToSend.append('nombreAutor', formData.nombreAutor || '');
                 formDataToSend.append('apellidoAutor', formData.apellidoAutor || '');
                 formDataToSend.append('dniAutor', formData.dniAutor || '');
@@ -193,6 +198,7 @@
             }
             
             if (disciplinaSeleccionada === 'artesAudiovisuales') {
+                formDataToSend.append('declaracionJurada', formData.declaracionJurada || '');
                 formDataToSend.append('nombreReferente', formData.nombreReferente || '');
                 formDataToSend.append('apellidoReferente', formData.apellidoReferente || '');
                 formDataToSend.append('dniReferente', formData.dniReferente || '');
@@ -226,8 +232,8 @@
             
             // Después de 3 segundos, redirigimos a la página principal
             setTimeout(() => {
-                goto('/');
-            }, 3000);
+                // window.location.reload();
+            }, 3000)
         } catch (error) {
             // Capturamos el error y lo registramos
             const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
@@ -248,8 +254,17 @@
 
     function handleFileChange(event: Event) {
         const input = event.target as HTMLInputElement;
-        if (input.files) {
-            formData.archivos = Array.from(input.files);
+        if (input.files && input.files.length > 0) {
+            console.log("declaracionJurada", input.files[0]);
+            formData.declaracionJurada = input.files[0];
+        }
+    }
+
+    function handleFichaFileChange(event: Event) {
+        const input = event.target as HTMLInputElement;
+        if (input.files && input.files.length > 0) {
+            formData.fichaArtistica = input.files[0];
+            console.log("GUARDE EL ARCHIVO");
         }
     }
 
@@ -471,12 +486,12 @@
                             required
                         />
 
-                        <label for="fichaArtistica">Ficha artística y técnica:</label>
+                        <!-- <label for="fichaArtistica">Ficha artística y técnica:</label>
                         <textarea 
                             id="fichaArtistica" 
                             bind:value={formData.fichaArtistica} 
                             required
-                        ></textarea>
+                        ></textarea> -->
 
                         <label for="historiaSolista">Breve historia del/a solista o grupo:</label>
                         <textarea 
@@ -579,11 +594,11 @@
                         <label for="descripcionMusica">Descripción de la misma:</label>
                         <textarea id="descripcionMusica" bind:value={formData.descripcion} required></textarea>
 
-                        <label for="declaracionJuradaMusica">Declaración jurada sobre derecho de autor:</label>
-                        <input type="file" id="declaracionJuradaMusica" accept=".pdf,.doc,.docx" on:change={handleFileChange} required />
+                        <label for="declaracionJurada">Declaración jurada sobre derecho de autor:</label>
+                        <input type="file" id="declaracionJurada" accept=".pdf,.doc,.docx" on:change={handleFileChange} required />
 
                         <label for="fichaArtistica">Ficha artística y técnica:</label>
-                        <input type="file" id="fichaArtistica" accept=".pdf,.doc,.docx" on:change={handleFileChange} required />
+                        <input type="file" id="fichaArtistica" accept=".pdf,.doc,.docx" on:change={handleFichaFileChange} required />
 
                         <label for="historia">Breve historia del solista/duo/banda:</label>
                         <textarea id="historia" bind:value={formData.historia} required></textarea>

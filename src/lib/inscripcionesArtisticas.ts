@@ -47,7 +47,8 @@ export async function guardarInscripcionArtistica(inscripcion: Partial<Inscripci
             tecnica: inscripcion.tecnica,
             nombre_referente: inscripcion.nombreReferente,
             apellido_referente: inscripcion.apellidoReferente,
-            dni_referente: inscripcion.dniReferente
+            dni_referente: inscripcion.dniReferente,
+            declaracion_jurada: inscripcion.declaracionJurada
         };
 
         // Usar transacción para mantener consistencia

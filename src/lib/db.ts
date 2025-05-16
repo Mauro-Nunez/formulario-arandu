@@ -1,13 +1,14 @@
 import mysql from 'mysql2/promise';
 import { logger, LogLevel } from './logger';
+import { MYSQL_DATABASE, MYSQL_HOST, MYSQL_PASSWORD, MYSQL_PORT, MYSQL_USER } from '$env/static/private';
 
 // Configuración de la conexión a la base de datos
 const dbConfig = {
-  host: process.env.MYSQL_HOST!,
-  port: parseInt(process.env.MYSQL_PORT!),
-  user: process.env.MYSQL_USER!,
-  password: process.env.MYSQL_PASSWORD!,
-  database: process.env.MYSQL_DATABASE!,
+  host: MYSQL_HOST,
+  port: parseInt(MYSQL_PORT),
+  user: MYSQL_USER,
+  password: MYSQL_PASSWORD,
+  database: MYSQL_DATABASE,
   waitForConnections: true,
   connectionLimit: 10,
   ssl: { rejectUnauthorized: false },
