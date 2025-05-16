@@ -153,6 +153,7 @@
             // Agregar campos específicos según disciplina en formato JSON
             if (disciplinaSeleccionada === 'danza') {
                 formDataToSend.append('declaracionJurada', formData.declaracionJurada || '');
+                formDataToSend.append('fichaArtistica', formData.fichaArtistica || '');
                 formDataToSend.append('historiaSolista', formData.historiaSolista || '');
                 formDataToSend.append('integrantesEnEscena', JSON.stringify(formData.integrantesEnEscena || []));
                 formDataToSend.append('integrantesFueraEscena', JSON.stringify(formData.integrantesFueraEscena || []));
@@ -160,6 +161,7 @@
             
             if (disciplinaSeleccionada === 'teatro') {
                 formDataToSend.append('declaracionJurada', formData.declaracionJurada || '');
+                formDataToSend.append('fichaArtistica', formData.fichaArtistica || '');
                 formDataToSend.append('autor', formData.autor || '');
                 formDataToSend.append('duracion', formData.duracion || '');
                 formDataToSend.append('genero', formData.genero || '');
@@ -173,8 +175,8 @@
             
             if (disciplinaSeleccionada === 'musica') {
                 formDataToSend.append('declaracionJurada', formData.declaracionJurada || '');
-                formDataToSend.append('historia', formData.historia || '');
                 formDataToSend.append('fichaArtistica', formData.fichaArtistica || '');
+                formDataToSend.append('historia', formData.historia || '');
                 formDataToSend.append('descripcionMaterial', formData.descripcionMaterial || '');
                 formDataToSend.append('integrantes', JSON.stringify(formData.integrantes || []));
                 formDataToSend.append('colaboradores', JSON.stringify(formData.colaboradores || []));
@@ -255,7 +257,6 @@
     function handleFileChange(event: Event) {
         const input = event.target as HTMLInputElement;
         if (input.files && input.files.length > 0) {
-            console.log("declaracionJurada", input.files[0]);
             formData.declaracionJurada = input.files[0];
         }
     }
@@ -264,7 +265,6 @@
         const input = event.target as HTMLInputElement;
         if (input.files && input.files.length > 0) {
             formData.fichaArtistica = input.files[0];
-            console.log("GUARDE EL ARCHIVO");
         }
     }
 
@@ -483,16 +483,10 @@
                             id="declaracionJurada" 
                             accept=".pdf,.doc,.docx" 
                             on:change={handleFileChange}
-                            required
                         />
 
-                        <!-- <label for="fichaArtistica">Ficha artística y técnica:</label>
-                        <textarea 
-                            id="fichaArtistica" 
-                            bind:value={formData.fichaArtistica} 
-                            required
-                        ></textarea> -->
-
+                        <label for="fichaArtistica">Ficha artística y técnica:</label>
+                        <input type="file" id="fichaArtistica" accept=".pdf,.doc,.docx" on:change={handleFichaFileChange} required />
                         <label for="historiaSolista">Breve historia del/a solista o grupo:</label>
                         <textarea 
                             id="historiaSolista" 
@@ -573,6 +567,9 @@
                             <input type="email" placeholder="E-mail" bind:value={formData.responsableEmail} required />
                         </div>
 
+                        <label for="fichaArtistica">Ficha artística:</label>
+                        <input type="file" id="fichaArtistica" accept=".pdf,.doc,.docx" on:change={handleFichaFileChange} required />
+
                         <h4>Elenco</h4>
                         {#each formData.elenco as integrante, i}
                             <div class="integrante-form">
@@ -595,7 +592,7 @@
                         <textarea id="descripcionMusica" bind:value={formData.descripcion} required></textarea>
 
                         <label for="declaracionJurada">Declaración jurada sobre derecho de autor:</label>
-                        <input type="file" id="declaracionJurada" accept=".pdf,.doc,.docx" on:change={handleFileChange} required />
+                        <input type="file" id="declaracionJurada" accept=".pdf,.doc,.docx" on:change={handleFileChange} />
 
                         <label for="fichaArtistica">Ficha artística y técnica:</label>
                         <input type="file" id="fichaArtistica" accept=".pdf,.doc,.docx" on:change={handleFichaFileChange} required />

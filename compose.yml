@@ -37,6 +37,7 @@ services:
       - "host.docker.internal:host-gateway"
     volumes:
       - ${REMOTE_PATH}/prod.db:/usr/src/app/prisma/dev.db
+      - ${REMOTE_PATH}/media:/usr/src/app/media
     # ports:
       # - 3000:3000
     labels:
