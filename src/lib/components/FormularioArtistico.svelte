@@ -357,7 +357,7 @@
                 </div>
 
                 <div class="form-section">
-                    <label for="nombre">Nombre de la obra/artista:</label>
+                    <label for="nombre">Nombre de la obra/espectáculo/artista:</label>
                     <input 
                         type="text" 
                         id="nombre" 
@@ -402,13 +402,13 @@
                         {:else if disciplinaSeleccionada === 'fotografia'}
                             <p>La obra puede presentarse en formato digital (JPG o PDF) o presencial (tres copias impresas, tamaño mínimo 15x21 cm).</p>
                         {:else if disciplinaSeleccionada === 'artesVisuales'}
-                            {#if formData.tipoObra === 'bidimensional'}
+                            <!-- {#if formData.tipoObra === 'bidimensional'}
                                 <p>Presentación presencial. Tamaño mínimo 15x21 cm, máximo 200 cm (incluyendo marco y/o soporte).</p>
                             {:else if formData.tipoObra === 'tridimensional'}
                                 <p>Presentación presencial. Tamaño mínimo 15x21x5 cm, máximo 200 cm.</p>
-                            {:else}
+                            {:else} -->
                                 <p>Extensión máxima de 90 páginas, todas numeradas. Presentación en formato digital (PDF) o presencial (tres ejemplares impresos).</p>
-                            {/if}
+                            <!-- {/if} -->
                         {:else if disciplinaSeleccionada === 'artesAudiovisuales'}
                             <p>Presentación en formato digital (video o link de visualización web).</p>
                         {/if}
@@ -460,7 +460,7 @@
                         <div class="link-input">
                             <label for="linkContenido">Enlace a la presentación:</label>
                             <input 
-                                type="url" 
+                                type="text" 
                                 id="linkContenido" 
                                 bind:value={formData.linkContenido} 
                                 placeholder="https://..."
@@ -658,7 +658,7 @@
                             <input type="text" placeholder="DNI" bind:value={formData.dniAutor} required />
                         </div>
 
-                        <h4>Formato de presentación</h4>
+<!--                         <h4>Formato de presentación</h4>
                         <div class="formato-presentacion">
                             <div class="radio-option">
                                 <input 
@@ -688,7 +688,7 @@
                                     Se deberán entregar tres (3) copias del material editado
                                 </p>
                             </div>
-                        </div>
+                        </div> -->
                     </div>
                 {/if}
 
@@ -710,7 +710,7 @@
                             <input type="text" placeholder="DNI" bind:value={formData.dniAutor} required />
                         </div>
 
-                        <h4>Formato de presentación</h4>
+<!--                         <h4>Formato de presentación</h4>
                         <div class="formato-presentacion">
                             <div class="radio-option">
                                 <input 
@@ -740,7 +740,7 @@
                                     Se deberán entregar tres (3) copias con un tamaño mínimo de 15x21 cm
                                 </p>
                             </div>
-                        </div>
+                        </div> -->
                     </div>
                 {/if}
 
@@ -762,9 +762,9 @@
                             <input type="text" placeholder="DNI" bind:value={formData.dniAutor} required />
                         </div>
 
-                        <h4>Tipo de obra</h4>
+<!--                         <h4>Tipo de obra</h4>
                         <div class="tipo-obra">
-                            <div class="radio-option">
+                             <div class="radio-option">
                                 <input 
                                     type="radio" 
                                     id="tipoBidimensional" 
@@ -792,7 +792,7 @@
                                     Tamaño mínimo: 15x21x5 cm<br>
                                     Tamaño máximo: 200 cm
                                 </p>
-                            </div>
+                            </div> 
 
                             <div class="radio-option">
                                 <input 
@@ -808,9 +808,9 @@
                                     Todas las páginas deben estar numeradas
                                 </p>
                             </div>
-                        </div>
+                        </div> -->
 
-                        {#if formData.tipoObra !== 'historieta'}
+<!--                         {#if formData.tipoObra !== 'historieta'}
                             <h4>Medidas de la obra</h4>
                             <div class="medidas-form">
                                 <div class="medida-input">
@@ -831,8 +831,8 @@
 
                             <label for="dossierTecnico">Dossier técnico (descripción de materiales, técnica, pesos, medidas, plano, etc.):</label>
                             <textarea id="dossierTecnico" bind:value={formData.dossierTecnico} required></textarea>
-                        {:else}
-                            <h4>Formato de presentación</h4>
+                        {:else} -->
+<!--                             <h4>Formato de presentación</h4>
                             <div class="formato-presentacion">
                                 <div class="radio-option">
                                     <input 
@@ -861,14 +861,14 @@
                                         Se deberán entregar tres (3) ejemplares
                                     </p>
                                 </div>
-                            </div>
+                            </div> -->
 
                             <label for="sinopsisHistorieta">Síntesis argumental (sinopsis de hasta 1 carilla):</label>
                             <textarea id="sinopsisHistorieta" bind:value={formData.sinopsisHistorieta} required></textarea>
 
                             <label for="numeroPaginas">Número de páginas:</label>
                             <input type="number" id="numeroPaginas" bind:value={formData.numeroPaginas} required min="1" max="90" />
-                        {/if}
+                        <!-- {/if} -->
 
                         <label for="materialEntregado">Descripción del material entregado:</label>
                         <textarea id="materialEntregado" bind:value={formData.materialEntregado} required></textarea>
@@ -929,9 +929,6 @@
                             Agregar integrante/colaborador
                         </button>
 
-                        <div class="info-box">
-                            <p><strong>Nota:</strong> El material deberá ser enviado en formato de video o un link de visualización web, con el asunto "Obra – Arandú – Rubro Audiovisual".</p>
-                        </div>
                     </div>
                 {/if}
 
