@@ -52,6 +52,13 @@ export const POST: RequestHandler = async ({ request }) => {
       // Si es un File, procesarlo adecuadamente
       else if (['archivoContenido', 'declaracionJurada', 'fichaArtistica'].includes(key) && value instanceof File) {
         const file = value;
+        
+        // Validar tamaño del archivo (100MB máximo)
+        const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB en bytes
+        if (file.size > MAX_FILE_SIZE) {
+          throw new Error(`El archivo ${file.name} excede el tamaño máximo permitido de 100MB`);
+        }
+        
         const fileName = getUniqueFileName(file.name);
         const {path} = await InscriptionFileService.writeFile(file, fileName);
         

@@ -83,15 +83,26 @@ const mockUsers = [
 // Función para iniciar sesión llamando al API endpoint
 export async function login(email: string, password: string): Promise<User> {
     try {
+        console.log(`Intentando iniciar sesión para: ${email}`);
+        
         const response = await fetch('/api/auth/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ email, password })
+            body: JSON.stringify({ email, password }),
+            credentials: 'include' // Asegurarnos de que la cookie se guarde
         });
 
+        console.log(`Respuesta del servidor login: ${response.status} ${response.statusText}`);
+        
+        // Verificar cookies recibidas
+        if (typeof document !== 'undefined') {
+            console.log("Cookies después de login:", document.cookie);
+        }
+
         const data = await response.json();
+        console.log("Datos recibidos del login:", data);
 
         if (!response.ok) {
             logger.error('Error en la respuesta del API de login:', { status: response.status, data });
@@ -113,16 +124,61 @@ export async function login(email: string, password: string): Promise<User> {
 }
 
 // Función para cerrar sesión
-export function logout() {
-    userStore.set(null);
-    // Considera redirigir desde el componente o un hook si es más apropiado para tu flujo
-    if (typeof window !== 'undefined') {
-        goto('/login');
+export async function logout() {
+    try {
+        const response = await fetch('/api/auth/logout', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.error || 'Error al cerrar sesión');
+        }
+
+        // Limpiar el store localmente
+        userStore.set(null);
+        
+        // Redirigir al login
+        if (typeof window !== 'undefined') {
+            goto('/login');
+        }
+    } catch (err) {
+        logger.error('Error al cerrar sesión:', { 
+            error: err instanceof Error ? err.message : String(err) 
+        });
+        throw err;
     }
 }
 
 // Función para verificar si el usuario está autenticado
 // Esta función podría necesitar ajustarse si la sesión se maneja en el servidor
+export async function checkAuthenticated(): Promise<boolean> {
+    try {
+        // Verificar autenticación llamando al endpoint
+        const response = await fetch('/api/auth/me', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            return false;
+        }
+        
+        const data = await response.json();
+        return data.authenticated === true;
+    } catch (error) {
+        logger.error('Error al verificar autenticación:', { error });
+        return false;
+    }
+}
+
+// Verificación síncrona (usando el store)
 export function isAuthenticated(): boolean {
     let authenticated = false;
     const unsubscribe = userStore.subscribe(currentUser => {
@@ -132,12 +188,53 @@ export function isAuthenticated(): boolean {
     return authenticated;
 }
 
+// Función para cargar el usuario en el store desde el servidor
+export async function loadUserIntoStore(): Promise<boolean> {
+    try {
+        const response = await fetch('/api/auth/me', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            return false;
+        }
+        
+        const data = await response.json();
+        
+        if (data.authenticated && data.user) {
+            userStore.set(data.user);
+            return true;
+        }
+        
+        return false;
+    } catch (error) {
+        logger.error('Error al cargar usuario en el store:', { error });
+        return false;
+    }
+}
+
 // Middleware para proteger rutas que requieren autenticación
 // Este es un protector del lado del cliente. Para protección robusta, usa hooks del servidor.
-export function requireAuth() {
+export async function requireAuth() {
     if (typeof window !== 'undefined') { // Asegurar que solo se ejecute en el cliente
+        // Primero verificar el store
         if (!isAuthenticated()) {
-            goto('/login');
+            // Si no hay usuario en el store, verificar con el servidor
+            const isServerAuthenticated = await checkAuthenticated();
+            
+            if (!isServerAuthenticated) {
+                // Si no está autenticado según el servidor, redirigir al login
+                logger.info('Usuario no autenticado, redirigiendo a login');
+                goto('/login');
+            } else {
+                // Si está autenticado según el servidor pero no en el store, actualizar el store
+                logger.info('Usuario autenticado en servidor pero no en store, actualizando store');
+                await loadUserIntoStore();
+            }
         }
     }
 } 

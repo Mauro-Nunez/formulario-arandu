@@ -1,6 +1,6 @@
-import { prisma } from '../prisma';
-import type { User } from '../stores';
-import { logger, LogLevel } from '../logger';
+import type { User } from '$lib/stores';
+import { logger } from '$lib/logger';
+import { prisma } from '$lib/prisma';
 
 /**
  * Interfaz para datos de inscripción artística
@@ -17,7 +17,6 @@ export interface InscripcionArtistica {
     link_contenido?: string;
     archivo_contenido?: string;
     estado?: 'pendiente' | 'aprobado' | 'rechazado';
-    usuario_id: number;
     fecha_creacion?: Date | string;
     fecha_modificacion?: Date | string;
     
@@ -80,7 +79,6 @@ export async function guardarInscripcionArtistica(inscripcion: InscripcionArtist
                     tipo_contenido: inscripcion.tipo_contenido,
                     link_contenido: inscripcion.link_contenido || null,
                     archivo_contenido: inscripcion.archivo_contenido || null,
-                    usuario_id: inscripcion.usuario_id,
                     ficha_artistica: inscripcion.ficha_artistica || null,
                     historia_solista: inscripcion.historia_solista || null,
                     autor: inscripcion.autor || null,
@@ -232,7 +230,6 @@ export async function guardarInscripcionArtistica(inscripcion: InscripcionArtist
             link_contenido: resultado.link_contenido || undefined,
             archivo_contenido: resultado.archivo_contenido || undefined,
             estado: resultado.estado as ('pendiente' | 'aprobado' | 'rechazado'),
-            usuario_id: resultado.usuario_id,
             fecha_creacion: resultado.fecha_creacion,
             fecha_modificacion: resultado.fecha_modificacion,
             ficha_artistica: resultado.ficha_artistica || undefined,
@@ -416,51 +413,28 @@ export async function obtenerInscripciones(usuario: User | null, tipo: 'artistic
     if (!usuario) return [];
 
     try {
-        let inscripciones;
-
-        if (usuario.es_admin) {
-            // Los administradores ven todas las inscripciones
-            inscripciones = await prisma.inscripciones_artisticas.findMany({
-                include: {
-                    disciplinas: true
-                }
-            });
-        } else if (usuario.disciplina_id) {
-            // Usuarios regulares ven solo las inscripciones de su disciplina
-            inscripciones = await prisma.inscripciones_artisticas.findMany({
-                where: {
-                    disciplina_id: usuario.disciplina_id
-                },
-                include: {
-                    disciplinas: true
-                }
-            });
-        } else {
-            return [];
+        // Verificar la información del usuario antes de realizar la solicitud
+        console.log("Usuario en obtenerInscripciones:", usuario);
+        
+        // Llamar al endpoint de API con opciones explícitas para asegurar que las cookies se envíen
+        const response = await fetch('/api/inscripciones/listar', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include' // Importante: esto asegura que las cookies se envíen con la solicitud
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error("Error al obtener inscripciones:", errorData);
+            throw new Error(errorData.error || 'Error al obtener inscripciones');
         }
-
-        // Formatear resultados
-        return Promise.all(inscripciones.map(async (insc) => {
-            return formatearInscripcion(insc, insc.disciplinas.nombre);
-        }));
+        
+        const data = await response.json();
+        return data.inscripciones || [];
     } catch (error) {
         logger.error('Error al obtener inscripciones', { error });
-        
-        // Guardar el error en la base de datos
-        try {
-            await prisma.logs_sistema.create({
-                data: {
-                    nivel: 'ERROR',
-                    mensaje: 'Error al obtener listado de inscripciones',
-                    detalles: {
-                        error: error instanceof Error ? error.message : 'Error desconocido'
-                    }
-                }
-            });
-        } catch (logError) {
-            console.error('Error al registrar el error en la base de datos:', logError);
-        }
-
         return [];
     }
 }
@@ -472,112 +446,24 @@ export async function obtenerInscripciones(usuario: User | null, tipo: 'artistic
  */
 export async function obtenerInscripcionPorId(id: number): Promise<InscripcionArtistica | null> {
     try {
-        const inscripcion = await prisma.inscripciones_artisticas.findUnique({
-            where: { id },
-            include: {
-                disciplinas: true,
-                integrantes: true
-            }
+        // Llamar al endpoint de API con opciones explícitas para asegurar que las cookies se envíen
+        const response = await fetch(`/api/inscripciones/detalles/${id}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include' // Importante: esto asegura que las cookies se envíen con la solicitud
         });
-
-        if (!inscripcion) return null;
-
-        // Obtener los integrantes por tipo
-        const integrantesEnEscena = inscripcion.integrantes.filter(i => i.tipo === 'en_escena');
-        const integrantesFueraEscena = inscripcion.integrantes.filter(i => i.tipo === 'fuera_escena');
-        const elenco = inscripcion.integrantes.filter(i => i.tipo === 'elenco');
-        const integrantes = inscripcion.integrantes.filter(i => i.tipo === 'integrante');
-        const colaboradores = inscripcion.integrantes.filter(i => i.tipo === 'colaborador');
-        const equipoTecnico = inscripcion.integrantes.filter(i => i.tipo === 'equipo_tecnico');
-
-        return {
-            id: inscripcion.id,
-            nombre: inscripcion.nombre,
-            disciplina_id: inscripcion.disciplina_id,
-            disciplina: inscripcion.disciplinas.nombre,
-            email: inscripcion.email,
-            telefono: inscripcion.telefono,
-            descripcion: inscripcion.descripcion || undefined,
-            tipo_contenido: inscripcion.tipo_contenido as 'archivo' | 'link',
-            link_contenido: inscripcion.link_contenido || undefined,
-            archivo_contenido: inscripcion.archivo_contenido || undefined,
-            estado: inscripcion.estado as 'pendiente' | 'aprobado' | 'rechazado',
-            usuario_id: inscripcion.usuario_id,
-            fecha_creacion: inscripcion.fecha_creacion,
-            fecha_modificacion: inscripcion.fecha_modificacion,
-            ficha_artistica: inscripcion.ficha_artistica || undefined,
-            historia_solista: inscripcion.historia_solista || undefined,
-            integrantesEnEscena: integrantesEnEscena.map(ie => ({
-                nombre: ie.nombre,
-                apellido: ie.apellido,
-                dni: ie.dni
-            })),
-            integrantesFueraEscena: integrantesFueraEscena.map(ife => ({
-                rol: ife.rol || '',
-                nombre: ife.nombre,
-                apellido: ife.apellido,
-                dni: ife.dni
-            })),
-            autor: inscripcion.autor || undefined,
-            duracion: inscripcion.duracion || undefined,
-            genero: inscripcion.genero || undefined,
-            destinatarios: inscripcion.destinatarios || undefined,
-            sinopsis: inscripcion.sinopsis || undefined,
-            fechaEstreno: inscripcion.fecha_estreno || undefined,
-            numeroFunciones: inscripcion.numero_funciones || undefined,
-            nombreGrupo: inscripcion.nombre_grupo || undefined,
-            elenco: elenco.map(e => ({
-                rol: e.rol || '',
-                nombre: e.nombre,
-                apellido: e.apellido,
-                dni: e.dni
-            })),
-            historia: inscripcion.historia || undefined,
-            descripcionMaterial: inscripcion.descripcion_material || undefined,
-            integrantes: integrantes.map(i => ({
-                nombre: i.nombre,
-                apellido: i.apellido,
-                dni: i.dni
-            })),
-            colaboradores: colaboradores.map(c => ({
-                rol: c.rol || '',
-                nombre: c.nombre,
-                apellido: c.apellido,
-                dni: c.dni
-            })),
-            nombreAutor: inscripcion.nombre_autor || undefined,
-            apellidoAutor: inscripcion.apellido_autor || undefined,
-            dniAutor: inscripcion.dni_autor || undefined,
-            tecnica: inscripcion.tecnica || undefined,
-            materialEntregado: inscripcion.material_entregado || undefined,
-            nombreReferente: inscripcion.nombre_referente || undefined,
-            apellidoReferente: inscripcion.apellido_referente || undefined,
-            dniReferente: inscripcion.dni_referente || undefined,
-            equipoTecnico: equipoTecnico.map(et => ({
-                rol: et.rol || '',
-                nombre: et.nombre,
-                apellido: et.apellido,
-                dni: et.dni
-            }))
-        };
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error(`Error al obtener inscripción #${id}:`, errorData);
+            throw new Error(errorData.error || `Error al obtener inscripción #${id}`);
+        }
+        
+        return await response.json();
     } catch (error) {
         logger.error('Error al obtener inscripción por ID', { id, error });
-        
-        // Guardar el error en la base de datos
-        try {
-            await prisma.logs_sistema.create({
-                data: {
-                    nivel: 'ERROR',
-                    mensaje: `Error al obtener inscripción #${id}`,
-                    detalles: {
-                        error: error instanceof Error ? error.message : 'Error desconocido'
-                    }
-                }
-            });
-        } catch (logError) {
-            console.error('Error al registrar el error en la base de datos:', logError);
-        }
-
         throw error;
     }
 }
@@ -596,7 +482,6 @@ function formatearInscripcion(inscripcion: any, nombreDisciplina?: string): Insc
         link_contenido: inscripcion.link_contenido || undefined,
         archivo_contenido: inscripcion.archivo_contenido || undefined,
         estado: inscripcion.estado as 'pendiente' | 'aprobado' | 'rechazado',
-        usuario_id: inscripcion.usuario_id,
         fecha_creacion: inscripcion.fecha_creacion,
         fecha_modificacion: inscripcion.fecha_modificacion,
         ficha_artistica: inscripcion.ficha_artistica || undefined,

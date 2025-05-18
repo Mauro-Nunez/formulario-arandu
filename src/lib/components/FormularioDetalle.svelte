@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { aprobarInscripcion, rechazarInscripcion } from '$lib/inscripciones';
+    import { aprobarInscripcionArtistica, rechazarInscripcionArtistica } from '$lib/services/inscripcionesService';
+    import { userStore } from '$lib/stores';
     export let inscripcion: any;
     export let cerrar: () => void;
     export let recargarInscripciones: () => void;
@@ -16,16 +17,54 @@
     }
 
     // Funciones para aprobar y rechazar inscripciones
-    function handleAprobar() {
-        aprobarInscripcion(inscripcion.id);
-        recargarInscripciones();
-        cerrar();
+    async function handleAprobar() {
+        try {
+            const response = await fetch('/api/inscripciones/aprobar', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ id: inscripcion.id })
+            });
+
+            const result = await response.json();
+            
+            if (result.success) {
+                recargarInscripciones();
+                cerrar();
+            } else {
+                console.error('Error al aprobar inscripción:', result.error);
+                alert('Error al aprobar la inscripción: ' + result.error);
+            }
+        } catch (error) {
+            console.error('Error al aprobar inscripción:', error);
+            alert('Error al aprobar la inscripción');
+        }
     }
 
-    function handleRechazar() {
-        rechazarInscripcion(inscripcion.id);
-        recargarInscripciones();
-        cerrar();
+    async function handleRechazar() {
+        try {
+            const response = await fetch('/api/inscripciones/rechazar', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ id: inscripcion.id })
+            });
+
+            const result = await response.json();
+            
+            if (result.success) {
+                recargarInscripciones();
+                cerrar();
+            } else {
+                console.error('Error al rechazar inscripción:', result.error);
+                alert('Error al rechazar la inscripción: ' + result.error);
+            }
+        } catch (error) {
+            console.error('Error al rechazar inscripción:', error);
+            alert('Error al rechazar la inscripción');
+        }
     }
 </script>
 
@@ -277,31 +316,43 @@
             <!-- Contenido del Proyecto -->
             <div class="section">
                 <h3 class="section-title">Contenido de la Presentación</h3>
-                {#if inscripcion.tipoContenido === 'archivo'}
+                {#if inscripcion.tipo_contenido === 'archivo' || inscripcion.tipoContenido === 'archivo'}
                     <div class="info-box">
                         <p class="field-label">Archivo</p>
-                        <a href="#" class="download-link">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="icon-link" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                            Descargar archivo
-                        </a>
+                        {#if inscripcion.archivo_contenido || inscripcion.archivoContenido}
+                            <a href={`/api/archivos/${inscripcion.archivo_contenido || inscripcion.archivoContenido}`} 
+                               target="_blank" 
+                               class="download-link">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="icon-link" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                Ver archivo
+                            </a>
+                        {:else}
+                            <p class="field-value text-gray-500">No hay archivo disponible</p>
+                        {/if}
                     </div>
                 {:else}
                     <div class="info-box">
                         <p class="field-label">Enlace</p>
-                        <a href={inscripcion.linkContenido} target="_blank" class="external-link">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="icon-link" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                            </svg>
-                            Ver contenido
-                        </a>
+                        {#if inscripcion.link_contenido || inscripcion.linkContenido}
+                            <a href={inscripcion.link_contenido || inscripcion.linkContenido} 
+                               target="_blank" 
+                               class="external-link">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="icon-link" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                </svg>
+                                Ver contenido
+                            </a>
+                        {:else}
+                            <p class="field-value text-gray-500">No hay enlace disponible</p>
+                        {/if}
                     </div>
                 {/if}
             </div>
 
-            <!-- Acciones de Formulario para administradores -->
-            {#if inscripcion.esEditable}
+            <!-- Acciones de Formulario para inscripciones pendientes -->
+            {#if $userStore?.es_admin && inscripcion.estado === 'pendiente'}
                 <div class="actions">
                     <button class="button reject" onclick={handleRechazar}>
                         Rechazar
@@ -466,6 +517,11 @@
     .field-value {
         font-weight: 500;
         color: #1F2937;
+    }
+
+    .text-gray-500 {
+        color: #6B7280 !important;
+        font-weight: normal;
     }
 
     .description-box {

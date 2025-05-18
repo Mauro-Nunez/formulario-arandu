@@ -1,13 +1,14 @@
 import { PrismaClient } from '@prisma/client';
 
-// Declaración global para evitar múltiples instancias durante desarrollo
-declare global {
-  var prisma: PrismaClient | undefined;
-}
+// Crear un espacio global para evitar múltiples instancias en desarrollo
+const globalForPrisma: { prisma?: PrismaClient } = typeof window === 'undefined' 
+  ? global as unknown as { prisma?: PrismaClient }
+  : window as unknown as { prisma?: PrismaClient };
 
-// Usar cliente global en desarrollo para evitar múltiples instancias
-export const prisma = global.prisma || new PrismaClient();
+// Usar cliente "global" en desarrollo para evitar múltiples instancias
+export const prisma = globalForPrisma.prisma || new PrismaClient();
 
-if (process.env.NODE_ENV !== 'production') {
-  global.prisma = prisma;
+// Sólo asignar a global en desarrollo y en entorno de servidor
+if (process.env.NODE_ENV !== 'production' && typeof window === 'undefined') {
+  globalForPrisma.prisma = prisma;
 } 

@@ -4,7 +4,7 @@ import { prisma } from '$lib/prisma'; // Asumiendo que tienes prisma client conf
 import bcrypt from 'bcryptjs'; // Para la comparación de contraseñas hasheadas
 import { logger } from '$lib/logger';
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, cookies }) => {
   try {
     const { email, password } = await request.json();
 
@@ -46,6 +46,15 @@ export const POST: RequestHandler = async ({ request }) => {
       ...userWithoutPassword,
       disciplina: user.disciplinas?.nombre // Añade el nombre de la disciplina
     };
+
+    // Guardar la sesión del usuario en una cookie
+    cookies.set('user_session', JSON.stringify(userDataToReturn), {
+      path: '/',
+      httpOnly: true,
+      sameSite: 'strict',
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 60 * 60 * 24 * 7 // 7 días
+    });
 
     logger.info(`Login exitoso para email: ${email}`);
     return json(userDataToReturn, { status: 200 });

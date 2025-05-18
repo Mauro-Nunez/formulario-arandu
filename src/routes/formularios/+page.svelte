@@ -2,7 +2,7 @@
     import { onMount } from 'svelte';
     import { goto } from '$app/navigation';
     import { userStore } from '$lib/stores';
-    import { requireAuth, logout } from '$lib/auth';
+    import { requireAuth, logout, loadUserIntoStore } from '$lib/auth';
     import FormularioDetalle from '$lib/components/FormularioDetalle.svelte';
     import { obtenerInscripciones, obtenerInscripcionPorId, type InscripcionArtistica } from '$lib/services/inscripcionesService';
 
@@ -26,13 +26,22 @@
     ];
 
     onMount(async () => {
-        requireAuth();
+        console.log("onMount en formularios, verificando usuario...");
+        await requireAuth();
         
+        console.log("Estado de userStore después de requireAuth:", $userStore);
         if (!$userStore) {
-            goto('/login');
-            return;
+            console.log("No hay usuario en userStore después de requireAuth, intentando cargarlo...");
+            const loadSuccess = await loadUserIntoStore();
+            
+            if (!loadSuccess) {
+                console.log("No se pudo cargar el usuario, redirigiendo a login");
+                goto('/login');
+                return;
+            }
         }
 
+        console.log("Usuario verificado, cargando inscripciones...");
         await cargarInscripciones();
     });
 
@@ -167,7 +176,6 @@
                 
                 <div class="flex items-center gap-4">
                     <div class="flex items-center">
-                        <span class="text-sm font-medium text-gray-800">{$userStore?.nombre || 'Usuario'}</span>
                         {#if $userStore?.disciplina}
                             <span class="ml-2 px-2 py-0.5 text-xs bg-emerald-100 text-emerald-700 rounded-md font-medium border border-emerald-200">
                                 {$userStore.disciplina}
@@ -178,18 +186,6 @@
                             </span>
                         {/if}
                     </div>
-                    
-                    {#if $userStore?.es_admin}
-                        <a 
-                            href="/admin/logs" 
-                            class="inline-flex items-center text-xs font-medium text-indigo-600 hover:text-indigo-700 border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                            </svg>
-                            Ver Logs
-                        </a>
-                    {/if}
                     
                     <button 
                         onclick={logout} 

@@ -283,7 +283,7 @@
 
 <div class="formulario-container">
     <h1>Premios Arandú - Formulario de Inscripción Artística</h1>
-    <p class="subtitulo">Convocatoria Bienal de Artes 2024</p>
+    <p class="subtitulo">Convocatoria Bienal de Artes 2025</p>
     
     {#if mensajeError}
         <div class="mensaje-error">
@@ -452,6 +452,8 @@
                             />
                             <p class="formato-descripcion">
                                 Formatos aceptados: MP4, MOV, AVI, PDF, JPG, JPEG, PNG
+                                <br>
+                                <strong>Tamaño máximo: 100MB</strong>
                             </p>
                         </div>
                     {:else}
@@ -484,9 +486,15 @@
                             accept=".pdf,.doc,.docx" 
                             on:change={handleFileChange}
                         />
+                        <p class="formato-descripcion">
+                            <strong>Tamaño máximo: 100MB</strong>
+                        </p>
 
                         <label for="fichaArtistica">Ficha artística y técnica:</label>
                         <input type="file" id="fichaArtistica" accept=".pdf,.doc,.docx" on:change={handleFichaFileChange} required />
+                        <p class="formato-descripcion">
+                            <strong>Tamaño máximo: 100MB</strong>
+                        </p>
                         <label for="historiaSolista">Breve historia del/a solista o grupo:</label>
                         <textarea 
                             id="historiaSolista" 
@@ -596,6 +604,9 @@
 
                         <label for="fichaArtistica">Ficha artística y técnica:</label>
                         <input type="file" id="fichaArtistica" accept=".pdf,.doc,.docx" on:change={handleFichaFileChange} required />
+                        <p class="formato-descripcion">
+                            <strong>Tamaño máximo: 100MB</strong>
+                        </p>
 
                         <label for="historia">Breve historia del solista/duo/banda:</label>
                         <textarea id="historia" bind:value={formData.historia} required></textarea>

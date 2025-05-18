@@ -223,9 +223,13 @@ export async function aprobarInscripcionArtistica(id: number): Promise<Inscripci
         const inscripcion = await db.getById('inscripciones_artisticas', id);
         if (!inscripcion) return undefined;
         
+        // Crear la fecha en formato MySQL: YYYY-MM-DD HH:MM:SS
+        const ahora = new Date();
+        const fechaFormateada = ahora.toISOString().slice(0, 19).replace('T', ' ');
+        
         await db.update('inscripciones_artisticas', id, { 
             estado: 'aprobado',
-            fecha_modificacion: new Date().toISOString()
+            fecha_modificacion: fechaFormateada
         });
         
         const inscripcionActualizada = await db.getById('inscripciones_artisticas', id);
@@ -254,9 +258,13 @@ export async function rechazarInscripcionArtistica(id: number): Promise<Inscripc
         const inscripcion = await db.getById('inscripciones_artisticas', id);
         if (!inscripcion) return undefined;
         
+        // Crear la fecha en formato MySQL: YYYY-MM-DD HH:MM:SS
+        const ahora = new Date();
+        const fechaFormateada = ahora.toISOString().slice(0, 19).replace('T', ' ');
+        
         await db.update('inscripciones_artisticas', id, { 
             estado: 'rechazado',
-            fecha_modificacion: new Date().toISOString()
+            fecha_modificacion: fechaFormateada
         });
         
         const inscripcionActualizada = await db.getById('inscripciones_artisticas', id);
