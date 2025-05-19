@@ -2,6 +2,7 @@ import { svelteTesting } from '@testing-library/svelte/vite';
 import tailwindcss from '@tailwindcss/vite';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
+import path from 'path';
 
 export default defineConfig({
 	plugins: [
@@ -9,6 +10,13 @@ export default defineConfig({
 		tailwindcss(),
 		sveltekit()
 	],
+	resolve: {
+		alias: {
+		  '.prisma/client/index-browser': path.resolve(
+			'node_modules/.prisma/client/index-browser.js'
+		  )
+		}
+	  },
 	test: {
 		workspace: [
 			{

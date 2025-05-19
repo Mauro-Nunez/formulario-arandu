@@ -13,7 +13,6 @@ const config = {
 		// See https://svelte.dev/docs/kit/adapters for more information about adapters.
 		adapter: adapter({
 			// Configurar para aceptar solicitudes más grandes
-			maxRequestBodySize: 100 * 1024 * 1024 // 100MB
 		}),
 		
 		// Configuración de CSRF

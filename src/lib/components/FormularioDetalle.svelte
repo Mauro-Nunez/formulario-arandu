@@ -120,7 +120,7 @@
                         <h3 class="section-title">Ficha Artística</h3>
                         {#if inscripcion.ficha_artistica || inscripcion.fichaArtistica}
                             <div class="info-box">
-                                <a href={`/api/archivos/${inscripcion.ficha_artistica || inscripcion.fichaArtistica}`} 
+                                <a href={`/${inscripcion.ficha_artistica || inscripcion.fichaArtistica}`} 
                                    target="_blank" 
                                    class="download-link">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="icon-link" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -138,7 +138,7 @@
                         <h3 class="section-title">Declaración Jurada</h3>
                         {#if inscripcion.declaracion_jurada || inscripcion.declaracionJurada}
                             <div class="info-box">
-                                <a href={`/api/archivos/${inscripcion.declaracion_jurada || inscripcion.declaracionJurada}`} 
+                                <a href={`/${inscripcion.declaracion_jurada || inscripcion.declaracionJurada}`} 
                                    target="_blank" 
                                    class="download-link">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="icon-link" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -255,7 +255,7 @@
                         <h3 class="section-title">Ficha Artística</h3>
                         {#if inscripcion.ficha_artistica || inscripcion.fichaArtistica}
                             <div class="info-box">
-                                <a href={`/api/archivos/${inscripcion.ficha_artistica || inscripcion.fichaArtistica}`} 
+                                <a href={`/${inscripcion.ficha_artistica || inscripcion.fichaArtistica}`} 
                                    target="_blank" 
                                    class="download-link">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="icon-link" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -273,7 +273,7 @@
                         <h3 class="section-title">Declaración Jurada</h3>
                         {#if inscripcion.declaracion_jurada || inscripcion.declaracionJurada}
                             <div class="info-box">
-                                <a href={`/api/archivos/${inscripcion.declaracion_jurada || inscripcion.declaracionJurada}`} 
+                                <a href={`/${inscripcion.declaracion_jurada || inscripcion.declaracionJurada}`} 
                                    target="_blank" 
                                    class="download-link">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="icon-link" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -423,7 +423,7 @@
                     <div class="info-box">
                         <p class="field-label">Archivo</p>
                         {#if inscripcion.archivo_contenido || inscripcion.archivoContenido}
-                            <a href={`/api/archivos/${inscripcion.archivo_contenido || inscripcion.archivoContenido}`} 
+                            <a href={`/${inscripcion.archivo_contenido || inscripcion.archivoContenido}`} 
                                target="_blank" 
                                class="download-link">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="icon-link" fill="none" viewBox="0 0 24 24" stroke="currentColor">
