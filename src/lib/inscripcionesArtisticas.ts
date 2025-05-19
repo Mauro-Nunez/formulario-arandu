@@ -334,7 +334,7 @@ export async function obtenerInscripcionPorId(id: number): Promise<Inscripcion |
         const inscripcion = await db.getById('inscripciones_artisticas', id);
         if (!inscripcion) return undefined;
         
-        return formatearInscripcion(inscripcion);
+        return await formatearInscripcion(inscripcion);
     } catch (error) {
         logger.error('Error al obtener inscripción por ID', { id, error });
         await db.insertLog(LogLevel.ERROR, `Error al obtener inscripción #${id}`, { error });
