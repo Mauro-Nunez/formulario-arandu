@@ -80,7 +80,7 @@ export const POST: RequestHandler = async ({ request }) => {
         inscripcionData[key] = value;
       }
     }
-    
+    console.log(inscripcionData);    
     // Guardar la inscripción usando el servicio existente
     const inscripcionGuardada = await guardarInscripcionArtistica(inscripcionData);
     

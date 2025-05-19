@@ -51,6 +51,12 @@ export interface InscripcionArtistica {
     apellidoReferente?: string;
     dniReferente?: string;
     equipoTecnico?: { rol: string, nombre: string, apellido: string, dni: string }[];
+
+    responsableNombre?: string;
+    responsableApellido?: string;
+    responsableTelefono?: string;
+    responsableEmail?: string;
+    esConcertado?: boolean;
 }
 
 /**
@@ -89,7 +95,7 @@ export async function guardarInscripcionArtistica(inscripcion: InscripcionArtist
                     fecha_estreno: inscripcion.fechaEstreno ? new Date(inscripcion.fechaEstreno) : null,
                     numero_funciones: inscripcion.numeroFunciones || null,
                     nombre_grupo: inscripcion.nombreGrupo || null,
-                    es_concertado: inscripcion.elenco?.length ? true : false,
+                    es_concertado: inscripcion.esConcertado ? true : false,
                     historia: inscripcion.historia || null,
                     descripcion_material: inscripcion.descripcionMaterial || null,
                     nombre_autor: inscripcion.nombreAutor || null,
@@ -99,9 +105,15 @@ export async function guardarInscripcionArtistica(inscripcion: InscripcionArtist
                     material_entregado: inscripcion.materialEntregado || null,
                     nombre_referente: inscripcion.nombreReferente || null,
                     apellido_referente: inscripcion.apellidoReferente || null,
-                    dni_referente: inscripcion.dniReferente || null
+                    dni_referente: inscripcion.dniReferente || null,
+                    responsableTelefono: inscripcion.responsableTelefono || null,
+                    responsableEmail: inscripcion.responsableEmail || null,
+                    responsableNombre: inscripcion.responsableNombre || null,
+                    responsableApellido: inscripcion.responsableApellido || null,
                 }
             });
+
+            console.log("Inscripción creada:", inscripcionCreada);
 
             // Crear integrantes en escena si hay
             if (inscripcion.integrantesEnEscena?.length) {
@@ -252,6 +264,7 @@ export async function guardarInscripcionArtistica(inscripcion: InscripcionArtist
             nombreReferente: resultado.nombre_referente || undefined,
             apellidoReferente: resultado.apellido_referente || undefined,
             dniReferente: resultado.dni_referente || undefined
+
         };
     } catch (error) {
         // Registrar el error

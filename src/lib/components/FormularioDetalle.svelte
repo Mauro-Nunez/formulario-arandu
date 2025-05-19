@@ -118,12 +118,43 @@
                     
                     <div>
                         <h3 class="section-title">Ficha Artística</h3>
-                        <p class="description-box">{inscripcion.fichaArtistica}</p>
+                        {#if inscripcion.ficha_artistica || inscripcion.fichaArtistica}
+                            <div class="info-box">
+                                <a href={`/api/archivos/${inscripcion.ficha_artistica || inscripcion.fichaArtistica}`} 
+                                   target="_blank" 
+                                   class="download-link">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon-link" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    Ver ficha artística
+                                </a>
+                            </div>
+                        {:else}
+                            <p class="description-box text-gray-500">No hay ficha artística disponible</p>
+                        {/if}
+                    </div>
+                    
+                    <div>
+                        <h3 class="section-title">Declaración Jurada</h3>
+                        {#if inscripcion.declaracion_jurada || inscripcion.declaracionJurada}
+                            <div class="info-box">
+                                <a href={`/api/archivos/${inscripcion.declaracion_jurada || inscripcion.declaracionJurada}`} 
+                                   target="_blank" 
+                                   class="download-link">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon-link" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    Ver declaración jurada
+                                </a>
+                            </div>
+                        {:else}
+                            <p class="description-box text-gray-500">No hay declaración jurada disponible</p>
+                        {/if}
                     </div>
                     
                     <div>
                         <h3 class="section-title">Historia</h3>
-                        <p class="description-box">{inscripcion.historiaSolista}</p>
+                        <p class="description-box">{inscripcion.historia_solista || inscripcion.historiaSolista || 'No disponible'}</p>
                     </div>
 
                     <div>
@@ -199,18 +230,90 @@
                         </div>
                         <div>
                             <p class="field-label">Grupo Teatral</p>
-                            <p class="field-value">{inscripcion.nombreGrupo}</p>
+                            <p class="field-value">{inscripcion.nombreGrupo || inscripcion.nombre_grupo || 'No especificado'}</p>
                         </div>
                         <div>
                             <p class="field-label">Estreno</p>
-                            <p class="field-value">{inscripcion.fechaEstreno ? formatearFecha(inscripcion.fechaEstreno) : 'No especificado'}</p>
+                            <p class="field-value">{inscripcion.fechaEstreno || inscripcion.fecha_estreno ? formatearFecha(inscripcion.fechaEstreno || inscripcion.fecha_estreno) : 'No especificado'}</p>
+                        </div>
+                        <div>
+                            <p class="field-label">Número de Funciones</p>
+                            <p class="field-value">{inscripcion.numeroFunciones || inscripcion.numero_funciones || 'No especificado'}</p>
+                        </div>
+                        <div>
+                            <p class="field-label">Tipo</p>
+                            <p class="field-value">{inscripcion.es_concertado ? 'Espectáculo concertado' : 'Espectáculo no concertado'}</p>
                         </div>
                     </div>
 
                     <div>
                         <h3 class="section-title">Sinopsis</h3>
-                        <p class="description-box">{inscripcion.sinopsis}</p>
+                        <p class="description-box">{inscripcion.sinopsis || 'No disponible'}</p>
                     </div>
+                    
+                    <div>
+                        <h3 class="section-title">Ficha Artística</h3>
+                        {#if inscripcion.ficha_artistica || inscripcion.fichaArtistica}
+                            <div class="info-box">
+                                <a href={`/api/archivos/${inscripcion.ficha_artistica || inscripcion.fichaArtistica}`} 
+                                   target="_blank" 
+                                   class="download-link">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon-link" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    Ver ficha artística
+                                </a>
+                            </div>
+                        {:else}
+                            <p class="description-box text-gray-500">No hay ficha artística disponible</p>
+                        {/if}
+                    </div>
+                    
+                    <div>
+                        <h3 class="section-title">Declaración Jurada</h3>
+                        {#if inscripcion.declaracion_jurada || inscripcion.declaracionJurada}
+                            <div class="info-box">
+                                <a href={`/api/archivos/${inscripcion.declaracion_jurada || inscripcion.declaracionJurada}`} 
+                                   target="_blank" 
+                                   class="download-link">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon-link" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    Ver declaración jurada
+                                </a>
+                            </div>
+                        {:else}
+                            <p class="description-box text-gray-500">No hay declaración jurada disponible</p>
+                        {/if}
+                    </div>
+
+                    {#if inscripcion.elenco && inscripcion.elenco.length > 0}
+                        <div>
+                            <h3 class="section-title">Elenco</h3>
+                            <div class="table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Rol</th>
+                                            <th>Nombre</th>
+                                            <th>Apellido</th>
+                                            <th>DNI</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {#each inscripcion.elenco as integrante}
+                                            <tr>
+                                                <td>{integrante.rol}</td>
+                                                <td>{integrante.nombre}</td>
+                                                <td>{integrante.apellido}</td>
+                                                <td>{integrante.dni}</td>
+                                            </tr>
+                                        {/each}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    {/if}
                 </div>
             {:else if inscripcion.disciplina === 'Música'}
                 <div class="section">

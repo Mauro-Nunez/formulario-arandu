@@ -171,6 +171,11 @@
                 formDataToSend.append('numeroFunciones', formData.numeroFunciones || '');
                 formDataToSend.append('nombreGrupo', formData.nombreGrupo || '');
                 formDataToSend.append('elenco', JSON.stringify(formData.elenco || []));
+                formDataToSend.append('responsableTelefono', formData.responsableTelefono || '');
+                formDataToSend.append('responsableEmail', formData.responsableEmail || '');
+                formDataToSend.append('responsableNombre', formData.responsableNombre || '');
+                formDataToSend.append('responsableApellido', formData.responsableApellido || '');
+                formDataToSend.append('es_concertado', formData.esConcertado || false);
             }
             
             if (disciplinaSeleccionada === 'musica') {
@@ -551,28 +556,28 @@
                         <label for="sinopsis">Síntesis argumental (sinopsis):</label>
                         <textarea id="sinopsis" bind:value={formData.sinopsis} required></textarea>
 
-                        <h4>Funciones</h4>
+                        <h4>Funciones (si corresponde)</h4>
                         <label for="fechaEstreno">Fecha de estreno:</label>
-                        <input type="date" id="fechaEstreno" bind:value={formData.fechaEstreno} required />
+                        <input type="date" id="fechaEstreno" bind:value={formData.fechaEstreno}  />
 
                         <label for="numeroFunciones">Número de funciones realizadas:</label>
-                        <input type="number" id="numeroFunciones" bind:value={formData.numeroFunciones} min="0" required />
+                        <input type="number" id="numeroFunciones" bind:value={formData.numeroFunciones} min="0"  />
 
-                        <h4>Grupo Teatral</h4>
+                        <h4>Grupo Teatral (si corresponde)</h4>
                         <label for="nombreGrupo">Nombre del grupo:</label>
-                        <input type="text" id="nombreGrupo" bind:value={formData.nombreGrupo} required />
+                        <input type="text" id="nombreGrupo" bind:value={formData.nombreGrupo}  />
 
                         <div class="checkbox-container">
                             <input type="checkbox" id="esConcertado" bind:checked={formData.esConcertado} />
                             <label for="esConcertado">Espectáculo concertado</label>
                         </div>
 
-                        <h4>Contacto del responsable</h4>
+                        <h4>Contacto del responsable del espectaculo o grupo teatral</h4>
                         <div class="contacto-form">
-                            <input type="text" placeholder="Nombre" bind:value={formData.responsableNombre} required />
-                            <input type="text" placeholder="Apellido" bind:value={formData.responsableApellido} required />
-                            <input type="tel" placeholder="Teléfono" bind:value={formData.responsableTelefono} required />
-                            <input type="email" placeholder="E-mail" bind:value={formData.responsableEmail} required />
+                            <input type="text" placeholder="Nombre" bind:value={formData.responsableNombre}  />
+                            <input type="text" placeholder="Apellido" bind:value={formData.responsableApellido}  />
+                            <input type="tel" placeholder="Teléfono" bind:value={formData.responsableTelefono}  />
+                            <input type="email" placeholder="E-mail" bind:value={formData.responsableEmail}  />
                         </div>
 
                         <label for="fichaArtistica">Ficha artística:</label>

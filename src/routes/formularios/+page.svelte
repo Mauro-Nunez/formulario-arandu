@@ -225,24 +225,24 @@
         </div>
         
         <!-- Filtros más grandes y con más margen -->
-        <div class="bg-white p-6 rounded shadow-sm mb-8">
-            <div class="flex flex-row flex-nowrap justify-center items-center gap-8 overflow-x-auto py-4">
-                <div class="min-w-[250px] max-w-sm">
+        <div class="bg-white p-6 rounded shadow-sm mb-24 filters">
+            <div class="flex mb-8 bg-red-500 flex-row flex-nowrap justify-center text-xl items-center gap-8 overflow-x-auto py-4">
+                <div class="min-w-[250px] max-w-sm filter-box">
                     <input
                         type="text"
                         id="busqueda"
                         bind:value={busqueda}
                         oninput={handleBusquedaChange}
                         placeholder="Buscar..."
-                        class="block w-full text-lg h-14 px-5 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                        class="filter-input w-full text-xl  px-5 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                     />
                 </div>
-                <div class="min-w-[250px] max-w-sm">
+                <div class="min-w-[250px] max-w-sm filter-box">
                     <select
                         id="filtroEstado"
                         bind:value={filtroEstado}
                         onchange={handleFiltroEstadoChange}
-                        class="w-full text-lg h-14 px-5 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white transition-colors font-medium"
+                        class="filter-select w-full text-lg h-14 px-5 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white transition-colors font-medium"
                     >
                         <option value="todos">Todos los estados</option>
                         <option value="pendiente">Pendiente</option>
@@ -251,11 +251,11 @@
                     </select>
                 </div>
                 {#if $userStore?.es_admin}
-                    <div class="min-w-[250px] max-w-sm">
+                    <div class="min-w-[250px] max-w-sm filter-box">
                         <select
                             id="filtroDisciplina"
                             onchange={handleFiltroDisciplinaChange}
-                            class="w-full text-lg h-14 px-5 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white transition-colors font-medium"
+                            class="filter-select w-full text-lg h-14 px-5 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white transition-colors font-medium"
                         >
                             <option value="0">Todas las disciplinas</option>
                             {#each todasDisciplinas as disc}
@@ -612,4 +612,62 @@
     margin-right: 0.5rem;
     flex-shrink: 0;
   }
+
+  .filters {
+	display: flex;
+	flex-wrap: nowrap;          /*  flex-row flex-nowrap  */
+	justify-content: center;    /*  justify-center        */
+	align-items: center;        /*  items-center          */
+	gap: 2rem;                  /*  gap-8  (32 px)        */
+	padding: 1rem 0;            /*  py-4                  */
+	overflow-x: auto;           /*  overflow-x-auto       */       /*  bg-red-500            */
+	font-size: 1.25rem; 
+    margin-bottom: 2rem;
+    /*  text-xl               */
+}
+
+/* Pequeño wrapper para limitar ancho de cada filtro  */
+.filter-box {
+	min-width: 250px;           /*  min-w-[250px]         */
+	max-width: 24rem;           /*  max-w-sm (~384 px)    */
+	width: 100%;
+
+}
+
+/* ===== INPUT DE BÚSQUEDA ====================================== */
+.filter-input {
+	width: 100%;
+	height: 3.5rem;                     /*  h-14 (56 px)        */
+	padding: 0 1.25rem;                 /*  px-5 (20 px)        */
+	border: 1px solid #d1d5db;          /*  border-gray-300     */
+	border-radius: 0.375rem;            /*  rounded-md          */
+	background: #ffffff;
+	font-size: inherit;                 /*  text-xl             */
+	transition: border-color .2s, box-shadow .2s;
+}
+
+.filter-input:focus {
+	outline: none;
+	border-color: #6366f1;              /*  focus:border-indigo-500  */
+	box-shadow: 0 0 0 2px #6366f1;      /*  focus:ring-2 indigo-500  */
+}
+
+.filter-select {
+	width: 100%;
+	height: 3.5rem;                     /*  h-14                */
+	padding: 0 1.25rem;                 /*  px-5                */
+	font-size: 1.125rem;                /*  text-lg             */
+	font-weight: 500;                   /*  font-medium         */
+	border: 1px solid #d1d5db;          /*  border-gray-300     */
+	border-radius: 0.375rem;            /*  rounded-md          */
+	background: #ffffff;
+	transition: border-color .2s, box-shadow .2s;
+	appearance: none;                   /*  appearance-none     */
+}
+
+.filter-select:focus {
+	outline: none;
+	border-color: #6366f1;              /*  focus:border-indigo-500  */
+	box-shadow: 0 0 0 2px #6366f1;      /*  focus:ring-2 indigo-500  */
+}
 </style> 
