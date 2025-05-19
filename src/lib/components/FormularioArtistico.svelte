@@ -451,12 +451,12 @@
                             <input 
                                 type="file" 
                                 id="archivoContenido" 
-                                accept=".mp4,.mov,.avi,.pdf,.jpg,.jpeg,.png" 
+                                accept=".mp4,.mov,.avi,.pdf,.jpg,.jpeg,.png,.mp3" 
                                 on:change={handleContenidoChange}
                                 required
                             />
                             <p class="formato-descripcion">
-                                Formatos aceptados: MP4, MOV, AVI, PDF, JPG, JPEG, PNG
+                                Formatos aceptados: MP4, MOV, AVI, PDF, JPG, JPEG, PNG, MP3
                                 <br>
                                 <strong>Tamaño máximo: 100MB</strong>
                             </p>
