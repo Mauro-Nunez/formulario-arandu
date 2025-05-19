@@ -54,6 +54,11 @@ export interface Inscripcion {
     
     // Campo para control de edición (solo administradores)
     esEditable?: boolean;
+
+    responsableNombre?: string;
+    responsableApellido?: string;
+    responsableTelefono?: string;
+    responsableEmail?: string;
 }
 
 // Datos de ejemplo para inscripciones basados en el FormularioArtistico
