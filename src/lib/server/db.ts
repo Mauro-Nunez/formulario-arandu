@@ -1,5 +1,5 @@
 import mysql from 'mysql2/promise';
-import { logger, LogLevel } from './logger';
+import { logger, LogLevel } from '../logger';
 import { MYSQL_DATABASE, MYSQL_HOST, MYSQL_PASSWORD, MYSQL_PORT, MYSQL_USER } from '$env/static/private';
 
 // Configuración de la conexión a la base de datos

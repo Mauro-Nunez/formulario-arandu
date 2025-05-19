@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { guardarInscripcionArtistica } from '$lib/inscripcionesArtisticas';
+import { guardarInscripcionArtistica } from '$lib/server/inscripcionesArtisticas';
 import { logger } from '$lib/logger';
 import fs from 'fs';
 import path from 'path';

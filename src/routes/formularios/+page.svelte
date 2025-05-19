@@ -5,7 +5,7 @@
     import { requireAuth, logout, loadUserIntoStore } from '$lib/auth';
     import FormularioDetalle from '$lib/components/FormularioDetalle.svelte';
 	import type { InscripcionArtistica } from '$lib/services/inscription.type';
-	import { obtenerInscripciones, obtenerInscripcionPorId } from '$lib/inscripcionesArtisticas';
+	import { obtenerInscripciones, obtenerInscripcionPorId } from '$lib/services/serviceApi';
 
     let inscripciones: InscripcionArtistica[] = [];
     let filtroEstado: 'todos' | 'pendiente' | 'aprobado' | 'rechazado' = 'todos';

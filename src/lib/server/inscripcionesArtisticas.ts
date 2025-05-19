@@ -1,7 +1,7 @@
-import type { Inscripcion } from './inscripciones';
-import { logger, LogLevel } from './logger';
+import type { Inscripcion } from '../inscripciones';
+import { logger, LogLevel } from '../logger';
 import * as db from './db';
-import type { User } from './stores';
+import type { User } from '../stores';
 
 /**
  * Guarda una inscripción artística en la base de datos
